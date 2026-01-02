@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '2.2.21'
+    //id 'org.jetbrains.kotlin.jvm'
+    id("com.gradleup.shadow") version "9.1.0"
+}
+
+group = 'me.onixdev.ircchat'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+    implementation(project(":protocol"))
+    implementation 'org.json:json:20250517'
+    implementation("dev.whyoleg.cryptography:cryptography-core:0.5.0")
+    implementation("dev.whyoleg.cryptography:cryptography-provider-optimal:0.5.0")
+    //implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+
+    if (JavaVersion.current().isJava10Compatible()) {
+        options.release.set(17)
+    }
+}
+tasks.shadowJar {
+    archiveClassifier.set("")
+    //   relocate("net.kyori", "libs.kyori")
+    // relocate("org.json","libs.json")
+    //  relocate("org.bstats", "meghostydev.shaded.org.bstats")
+
+}
+
+tasks.build.dependsOn tasks.shadowJar
