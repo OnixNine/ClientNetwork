@@ -6,20 +6,20 @@ import me.onixdev.ircchat.service.UserAuthService
 import org.java_websocket.WebSocket
 import org.json.JSONObject
 import java.io.File
-import java.lang.reflect.Constructor
 import java.nio.file.Files
 
-class IrcEntity(val connection : WebSocket) {
-    var userName:String = ""
-    var passHash:String = ""
-    var uuid:String = ""
+class IrcEntity(val connection: WebSocket) {
+    var role: String = "user"
+    var userName: String = ""
+    var passHash: String = ""
+    var uuid: String = ""
     var file: File? = null
-    var authed:Boolean = false;
-    fun sendPacket(packet : BasePacket) {
+    var authed: Boolean = false;
+    fun sendPacket(packet: BasePacket) {
         connection.send(Encrypting.encrypt(packet.export()))
     }
 
-    fun init(){
+    fun init() {
         val temp = File("user")
         if (!temp.exists()) {
             temp.mkdirs()
@@ -32,18 +32,19 @@ class IrcEntity(val connection : WebSocket) {
             json.put("name", userName)
             json.put("passHash", UserAuthService.getHash(passHash))
             json.put("uuid", uuid)
+            json.put("role", role)
             Files.write(file!!.toPath(), json.toString().toByteArray())
-        }
-        else {
+        } else {
             val json = JSONObject(String(Files.readAllBytes(file!!.toPath())))
             passHash = json.getString("passHash")
             uuid = json.getString("uuid")
             userName = json.getString("name")
+            role = json.getString("role")
         }
     }
 
     fun hasBeforeJoin(): Boolean {
-        return  File("user/$userName.json").exists()
+        return File("user/$userName.json").exists()
     }
 
 }

@@ -13,15 +13,14 @@ import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
-import java.util.*
 
 class ClientPacketReceiver(
     port: Int,
     private val packetHandler: PacketExecuter,
-   private val connectionDataManager: ConnectionDataManager
+    private val connectionDataManager: ConnectionDataManager
 ) : WebSocketServer(InetSocketAddress(port)) {
 
-    private val connections: MutableSet<WebSocket> = HashSet<WebSocket>()
+    private val connections: MutableSet<WebSocket> = HashSet()
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake?) {
         connections.add(conn)
@@ -57,42 +56,57 @@ class ClientPacketReceiver(
                         entity.userName = packet.username
                         entity.uuid = packet.sender
                         if (!entity.hasBeforeJoin()) {
-                        entity.passHash = packet.pass
-                        entity.init()
-                        }
-                        else{
+                            entity.passHash = packet.pass
+                            entity.init()
+                        } else {
                             entity.init()
                             val hash = UserAuthService.getHash(packet.pass)
-                            val valid = UserAuthService.checkAuth(entity.passHash,hash)
+                            val valid = UserAuthService.checkAuth(entity.passHash, hash)
                             if (valid) {
-                                entity.sendPacket(AuthFinishS2Packet(packet.sender,100,"Auth Success!","dev",entity.userName))
-                            entity.authed= true
-                            }
-                            else {
-                                entity.sendPacket(AuthFinishS2Packet(packet.sender,201,"Invalid Password!","user",entity.userName))
+                                entity.sendPacket(
+                                    AuthFinishS2Packet(
+                                        packet.sender,
+                                        100,
+                                        "Auth Success!",
+                                        "dev",
+                                        entity.userName
+                                    )
+                                )
+                                entity.authed = true
+                            } else {
+                                entity.sendPacket(
+                                    AuthFinishS2Packet(
+                                        packet.sender,
+                                        201,
+                                        "Invalid Password!",
+                                        "user",
+                                        entity.userName
+                                    )
+                                )
                             }
                             println("Username: " + packet.username + " validAuth: " + valid)
                         }
-                    }
-                    else {
+                    } else {
                         conn.close(1003, "invalidDataType")
                         return
                     }
                 }
+
                 1 -> {
                     packet = ChatMessageC2Packet(json)
                     val entity = connectionDataManager.getConnection(conn)
                     if (entity != null) {
                         if (!entity.authed) {
-                            entity.sendPacket(SystemMessageS2Packet(packet.sender,"you not authenticate!"))
+                            entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!"))
                             return
                         }
+                        packetHandler.handle(packet as ChatMessageC2Packet?)
+                        for (connect in connections) {
+                            val msg = ChatMessageS2packet(packet.sender, packet.message, entity.userName,entity.role).export()
+                            connect.send(Encrypting.encrypt(msg))
+                        }
                     }
-                    packetHandler.handle(packet as ChatMessageC2Packet?)
-                    for (connect in connections) {
-                        val msg = ChatMessageS2packet(packet.sender,packet.message,packet.author).export()
-                        connect.send(Encrypting.encrypt(msg))
-                    }
+
                 }
 
                 else -> {
