@@ -10,6 +10,7 @@ import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.security.Encrypting
 import me.onixdev.ircchat.service.UserAuthService
 import me.onixdev.ircchat.service.task.GlobalScheduler
+import me.onixdev.ircchat.util.config.BaseConfig
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
@@ -18,10 +19,10 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 class ClientPacketReceiver(
-    port: Int,
+   private val config: BaseConfig,
     private val packetHandler: PacketExecuter,
     private val connectionDataManager: ConnectionDataManager
-) : WebSocketServer(InetSocketAddress(port)) {
+) : WebSocketServer(InetSocketAddress(config.port)) {
 
     private val connections: MutableSet<WebSocket> = HashSet()
     private val connectNoAuth: MutableSet<WebSocket> = HashSet()
@@ -37,9 +38,8 @@ class ClientPacketReceiver(
                 val data = connectionDataManager.getConnection(connection)
                 if (data != null) {
                     val time = abs(System.currentTimeMillis().minus(data.createtime))
-                    println("time: $time")
-                    if (time > 20000) {
-                        connection.closeConnection(1003,"timeOut")
+                    if (time > config.timeout) {
+                        connection.close(1003,"Надо было авторизоваться")
                         connectNoAuth.remove(connection)
                     }
                 }
@@ -60,7 +60,7 @@ class ClientPacketReceiver(
     }
 
     override fun onMessage(conn: WebSocket, message: String?) {
-        val json: org.json.JSONObject = org.json.JSONObject(message)
+        val json: org.json.JSONObject = org.json.JSONObject(Encrypting.decrypt(message.toString()))
         if (!json.has("id") || !json.has("sender")) {
             println("Invalid packet: no id")
             conn.closeConnection(1003, "invalidDATA")
@@ -112,7 +112,6 @@ class ClientPacketReceiver(
                                     )
                                 )
                             }
-                            println("Username: " + packet.username + " validAuth: " + valid)
                         }
                     } else {
                         conn.close(1003, "invalidDataType")
@@ -125,7 +124,7 @@ class ClientPacketReceiver(
                     val entity = connectionDataManager.getConnection(conn)
                     if (entity != null) {
                         if (!entity.authed) {
-                            entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!"))
+                            entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!",101))
                             return
                         }
                         packetHandler.handle(packet as ChatMessageC2Packet?)
