@@ -9,6 +9,7 @@ import java.io.File
 import java.nio.file.Files
 
 class IrcEntity(val connection: WebSocket) {
+    val createtime: Double = System.currentTimeMillis().toDouble()
     var role: String = "user"
     var userName: String = ""
     var passHash: String = ""

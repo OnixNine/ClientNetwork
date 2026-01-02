@@ -17,6 +17,7 @@ class Server() {
         loadConfig()
         clientPacketReceiver = ClientPacketReceiver(port, packetExecuter,connectionDataManager)
         clientPacketReceiver!!.start()
+        println("Server Started port $port")
     }
 
     private fun loadConfig() {

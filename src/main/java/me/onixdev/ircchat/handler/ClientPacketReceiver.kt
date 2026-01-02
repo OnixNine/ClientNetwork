@@ -9,10 +9,13 @@ import me.onixdev.ircchat.impl.s2.SystemMessageS2Packet
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.security.Encrypting
 import me.onixdev.ircchat.service.UserAuthService
+import me.onixdev.ircchat.service.task.GlobalScheduler
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
+import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
 
 class ClientPacketReceiver(
     port: Int,
@@ -21,14 +24,38 @@ class ClientPacketReceiver(
 ) : WebSocketServer(InetSocketAddress(port)) {
 
     private val connections: MutableSet<WebSocket> = HashSet()
+    private val connectNoAuth: MutableSet<WebSocket> = HashSet()
+    init {
+        GlobalScheduler.runTaskTimer("AuthTimeout",0.seconds,1.seconds) {
+            checkTimeOut()
+        }
+    }
+
+    private fun checkTimeOut() {
+        if (connectNoAuth.isNotEmpty()) {
+            for (connection in connectNoAuth) {
+                val data = connectionDataManager.getConnection(connection)
+                if (data != null) {
+                    val time = abs(System.currentTimeMillis().minus(data.createtime))
+                    println("time: $time")
+                    if (time > 20000) {
+                        connection.closeConnection(1003,"timeOut")
+                        connectNoAuth.remove(connection)
+                    }
+                }
+            }
+        }
+    }
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake?) {
         connections.add(conn)
+        connectNoAuth.add(conn)
         connectionDataManager.addConnection(conn)
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String?, remote: Boolean) {
         connections.remove(conn)
+        connectNoAuth.remove(conn)
         connectionDataManager.removeConnection(conn)
     }
 
@@ -73,6 +100,7 @@ class ClientPacketReceiver(
                                     )
                                 )
                                 entity.authed = true
+                                connectNoAuth.remove(conn)
                             } else {
                                 entity.sendPacket(
                                     AuthFinishS2Packet(
