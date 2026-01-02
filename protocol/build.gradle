@@ -22,12 +22,5 @@ tasks.withType(JavaCompile).configureEach {
         options.release.set(17)
     }
 }
-//tasks.shadowJar {
-//    archiveClassifier.set("")
-//    //   relocate("net.kyori", "libs.kyori")
-//   // relocate("org.json","libs.json")
-//    //  relocate("org.bstats", "meghostydev.shaded.org.bstats")
-//
-//}
 
 tasks.build.dependsOn tasks.shadowJar
