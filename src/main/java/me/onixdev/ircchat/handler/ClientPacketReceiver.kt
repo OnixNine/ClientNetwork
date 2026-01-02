@@ -68,7 +68,7 @@ class ClientPacketReceiver(
                                         packet.sender,
                                         100,
                                         "Auth Success!",
-                                        "dev",
+                                        entity.role,
                                         entity.userName
                                     )
                                 )
@@ -79,7 +79,7 @@ class ClientPacketReceiver(
                                         packet.sender,
                                         201,
                                         "Invalid Password!",
-                                        "user",
+                                        entity.role,
                                         entity.userName
                                     )
                                 )
