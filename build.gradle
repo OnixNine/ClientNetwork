@@ -1,7 +1,6 @@
 plugins {
     id 'java'
     id 'org.jetbrains.kotlin.jvm' version '2.2.21'
-    //id 'org.jetbrains.kotlin.jvm'
     id("com.gradleup.shadow") version "9.1.0"
 }
 
@@ -18,7 +17,6 @@ dependencies {
     implementation 'org.json:json:20250517'
     implementation("dev.whyoleg.cryptography:cryptography-core:0.5.0")
     implementation("dev.whyoleg.cryptography:cryptography-provider-optimal:0.5.0")
-    //implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 kotlin {
@@ -34,10 +32,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 tasks.shadowJar {
     archiveClassifier.set("")
-    //   relocate("net.kyori", "libs.kyori")
-    // relocate("org.json","libs.json")
-    //  relocate("org.bstats", "meghostydev.shaded.org.bstats")
-
 }
 
 tasks.build.dependsOn tasks.shadowJar
