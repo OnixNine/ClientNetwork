@@ -1,6 +1,5 @@
 package me.onixdev.ircchat.handler
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import me.onixdev.ircchat.base.BasePacket
 import me.onixdev.ircchat.impl.c2.AuthC2Packet
 import me.onixdev.ircchat.impl.c2.ChatMessageC2Packet
