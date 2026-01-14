@@ -1,5 +1,6 @@
 package me.onixdev.ircchat.handler
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import me.onixdev.ircchat.base.BasePacket
 import me.onixdev.ircchat.impl.c2.AuthC2Packet
 import me.onixdev.ircchat.impl.c2.ChatMessageC2Packet
@@ -9,6 +10,7 @@ import me.onixdev.ircchat.impl.s2.SystemMessageS2Packet
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.security.Encrypting
 import me.onixdev.ircchat.service.UserAuthService
+import me.onixdev.ircchat.service.packet.PacketFactory
 import me.onixdev.ircchat.service.task.GlobalScheduler
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.java_websocket.WebSocket
@@ -24,12 +26,14 @@ class ClientPacketReceiver(
     private val connectionDataManager: ConnectionDataManager
 ) : WebSocketServer(InetSocketAddress(config.port)) {
 
+    val logger = KotlinLogging.logger("PacketLogger")
     private val connections: MutableSet<WebSocket> = HashSet()
     private val connectNoAuth: MutableSet<WebSocket> = HashSet()
     init {
         GlobalScheduler.runTaskTimer("AuthTimeout",0.seconds,1.seconds) {
             checkTimeOut()
         }
+
     }
 
     private fun checkTimeOut() {
@@ -48,18 +52,21 @@ class ClientPacketReceiver(
     }
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake?) {
+        logger.info { "Connected client ${conn.remoteSocketAddress}" }
         connections.add(conn)
         connectNoAuth.add(conn)
         connectionDataManager.addConnection(conn)
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String?, remote: Boolean) {
+        logger.info { "Closed client ${conn.remoteSocketAddress}" }
         connections.remove(conn)
         connectNoAuth.remove(conn)
         connectionDataManager.removeConnection(conn)
     }
 
     override fun onMessage(conn: WebSocket, message: String?) {
+        try {
         val json: org.json.JSONObject = org.json.JSONObject(Encrypting.decrypt(message.toString()))
         if (!json.has("id") || !json.has("sender")) {
             println("Invalid packet: no id")
@@ -71,93 +78,85 @@ class ClientPacketReceiver(
             conn.close(1003, "invalidBound")
             return
         }
-
-        val id: Int = json.getInt("id")
         lateinit var packet: BasePacket
-        try {
-            when (id) {
-                0 -> {
-                    val entity = connectionDataManager.getConnection(conn)
-                    if (entity != null) {
-                        if (entity.authed) {
-                            // Когда другой чел пытается залогиниться под логином этого когда тот уже авторизован?
-                            return
-                        }
-                        packet = AuthC2Packet(json)
-                        entity.userName = packet.username
-                        entity.uuid = packet.sender
-                        if (!entity.hasBeforeJoin()) {
-                            entity.passHash = packet.pass
-                            entity.init()
-                        } else {
-                            entity.init()
-                            val hash = UserAuthService.getHash(packet.pass)
-                            val valid = UserAuthService.checkAuth(entity.passHash, hash)
-                            if (valid) {
-                                entity.sendPacket(
-                                    AuthFinishS2Packet(
-                                        packet.sender,
-                                        100,
-                                        "Auth Success!",
-                                        entity.role,
-                                        entity.userName
-                                    )
-                                )
-                                entity.authed = true
-                                connectNoAuth.remove(conn)
-                            } else {
-                                entity.sendPacket(
-                                    AuthFinishS2Packet(
-                                        packet.sender,
-                                        201,
-                                        "Invalid Password!",
-                                        entity.role,
-                                        entity.userName
-                                    )
-                                )
-                            }
-                        }
-                    } else {
-                        conn.close(1003, "invalidDataType")
+
+            packet = PacketFactory.getPacketById(json)
+            logger.info { "received Packet ${packet.javaClass.simpleName} from ${conn.remoteSocketAddress}" }
+            if (packet is AuthC2Packet) {
+                val entity = connectionDataManager.getConnection(conn)
+                if (entity != null) {
+                    if (entity.authed) {
+                        // Когда другой чел пытается залогиниться под логином этого когда тот уже авторизован?
                         return
                     }
-                }
-
-                1 -> {
-                    packet = ChatMessageC2Packet(json)
-                    val entity = connectionDataManager.getConnection(conn)
-                    if (entity != null) {
-                        if (!entity.authed) {
-                            entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!",101))
-                            return
+                    packet = AuthC2Packet(json)
+                    entity.userName = packet.username
+                    entity.uuid = packet.sender
+                    if (!entity.hasBeforeJoin()) {
+                        entity.passHash = packet.pass
+                        entity.init()
+                    } else {
+                        entity.init()
+                        val hash = UserAuthService.getHash(packet.pass)
+                        val valid = UserAuthService.checkAuth(entity.passHash, hash)
+                        if (valid) {
+                            entity.sendPacket(
+                                AuthFinishS2Packet(
+                                    packet.sender,
+                                    100,
+                                    "Auth Success!",
+                                    entity.role,
+                                    entity.userName
+                                )
+                            )
+                            entity.authed = true
+                            connectNoAuth.remove(conn)
+                        } else {
+                            entity.sendPacket(
+                                AuthFinishS2Packet(
+                                    packet.sender,
+                                    201,
+                                    "Invalid Password!",
+                                    entity.role,
+                                    entity.userName
+                                )
+                            )
                         }
-                        if (entity.lastMessage == packet.message && entity.role != "dev") return
-                        packetHandler.handle(packet as ChatMessageC2Packet?)
-                        for (connect in connections) {
-                            val data = connectionDataManager.getConnection(connect)
-                            if (data != null) {
-                                if (data.authed) {
-                                    val msg = ChatMessageS2packet(packet.sender, packet.message, entity.userName,entity.role).export()
-                                    connect.send(Encrypting.encrypt(msg))
-                                }
+                    }
+                } else {
+                    conn.close(1003, "invalidDataType")
+                    return
+                }
+            }
+            if (packet is ChatMessageC2Packet) {
+                val entity = connectionDataManager.getConnection(conn)
+                if (entity != null) {
+                    if (!entity.authed) {
+                        entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!",101))
+                        return
+                    }
+                    if (entity.lastMessage == packet.message && entity.role != "dev") return
+                    packetHandler.handle(packet as ChatMessageC2Packet?)
+                    for (connect in connections) {
+                        val data = connectionDataManager.getConnection(connect)
+                        if (data != null) {
+                            if (data.authed) {
+                                val msg = ChatMessageS2packet(packet.sender, packet.message, entity.userName,entity.role).export()
+                                connect.send(Encrypting.encrypt(msg))
                             }
                         }
-                        entity.lastMessage = packet.message
                     }
-
-                }
-
-                else -> {
-                    conn.close(1003, "invalidPacket")
+                    entity.lastMessage = packet.message
                 }
             }
         } catch (e: Exception) {
-            println("Error while decoding packet: " + e.message)
+           logger.error{"Error while decoding packet: " + e.message}
             conn.close(1003, "invalidData")
         }
     }
 
     override fun onError(conn: WebSocket?, ex: Exception) {
+        logger.error{"Error : " + ex.message}
         ex.printStackTrace()
     }
 
