@@ -7,10 +7,10 @@ import org.json.JSONObject;
 public class CloudConfigActionS2Packet extends BasePacket {
     private String config,message = "";
     public CloudConfigActionS2Packet(String sender, String config, String message) {
-        super(2, PacketBound.CLIENT, sender);
+        super(3, PacketBound.CLIENT, sender);
     }
     public CloudConfigActionS2Packet(JSONObject jsonObject) {
-        super(2,PacketBound.CLIENT,BasePacket.getUUID(jsonObject));
+        super(3,PacketBound.CLIENT,BasePacket.getUUID(jsonObject));
         ValidationHandler.check(jsonObject,"config","message");
         message = jsonObject.getString("message");
         config = jsonObject.getString("config");
