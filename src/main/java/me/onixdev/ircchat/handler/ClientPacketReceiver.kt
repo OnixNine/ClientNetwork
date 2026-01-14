@@ -1,5 +1,6 @@
 package me.onixdev.ircchat.handler
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import me.onixdev.ircchat.base.BasePacket
 import me.onixdev.ircchat.impl.c2.AuthC2Packet
 import me.onixdev.ircchat.impl.c2.ChatMessageC2Packet
@@ -25,6 +26,7 @@ class ClientPacketReceiver(
     private val connectionDataManager: ConnectionDataManager
 ) : WebSocketServer(InetSocketAddress(config.port)) {
 
+    val logger = KotlinLogging.logger("PacketLogger")
     private val connections: MutableSet<WebSocket> = HashSet()
     private val connectNoAuth: MutableSet<WebSocket> = HashSet()
     init {
@@ -50,18 +52,21 @@ class ClientPacketReceiver(
     }
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake?) {
+        logger.info { "Connected client ${conn.remoteSocketAddress}" }
         connections.add(conn)
         connectNoAuth.add(conn)
         connectionDataManager.addConnection(conn)
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String?, remote: Boolean) {
+        logger.info { "Closed client ${conn.remoteSocketAddress}" }
         connections.remove(conn)
         connectNoAuth.remove(conn)
         connectionDataManager.removeConnection(conn)
     }
 
     override fun onMessage(conn: WebSocket, message: String?) {
+        try {
         val json: org.json.JSONObject = org.json.JSONObject(Encrypting.decrypt(message.toString()))
         if (!json.has("id") || !json.has("sender")) {
             println("Invalid packet: no id")
@@ -74,8 +79,9 @@ class ClientPacketReceiver(
             return
         }
         lateinit var packet: BasePacket
-        try {
+
             packet = PacketFactory.getPacketById(json)
+            logger.info { "received Packet ${packet.javaClass.simpleName} from ${conn.remoteSocketAddress}" }
             if (packet is AuthC2Packet) {
                 val entity = connectionDataManager.getConnection(conn)
                 if (entity != null) {
@@ -144,12 +150,13 @@ class ClientPacketReceiver(
                 }
             }
         } catch (e: Exception) {
-            println("Error while decoding packet: " + e.message)
+           logger.error{"Error while decoding packet: " + e.message}
             conn.close(1003, "invalidData")
         }
     }
 
     override fun onError(conn: WebSocket?, ex: Exception) {
+        logger.error{"Error : " + ex.message}
         ex.printStackTrace()
     }
 
