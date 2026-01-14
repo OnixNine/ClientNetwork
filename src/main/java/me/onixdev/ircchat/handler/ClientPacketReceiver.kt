@@ -28,7 +28,6 @@ class ClientPacketReceiver(
 
     private val connections: MutableSet<WebSocket> = HashSet()
     private val connectNoAuth: MutableSet<WebSocket> = HashSet()
-    val logger = KotlinLogging.logger("MyLogger")
     init {
         GlobalScheduler.runTaskTimer("AuthTimeout",0.seconds,1.seconds) {
             checkTimeOut()
@@ -78,9 +77,6 @@ class ClientPacketReceiver(
         lateinit var packet: BasePacket
         try {
             packet = PacketFactory.getPacketById(json)
-            if (packet == null) {
-                return
-            }
             if (packet is AuthC2Packet) {
                 val entity = connectionDataManager.getConnection(conn)
                 if (entity != null) {
