@@ -124,6 +124,7 @@ class ClientPacketReceiver(
                         }
                     }
                 } else {
+                    conn.send(PacketFactory.disconnectPacket(packet.sender,"InvalidData[1]"))
                     conn.close(1003, "invalidDataType")
                     return
                 }
@@ -136,6 +137,13 @@ class ClientPacketReceiver(
                         return
                     }
                     if (entity.lastMessage == packet.message && entity.role != "dev") return
+                    val message = packet.message
+                    if (message.length > 256) {
+                        logger.warn { "Message too long: ${message.length} bytes " }
+                        conn.close(1003, "Message to long expected ${message.length} > 256")
+                        PacketFactory.disconnectPacket(packet.sender,"Message to long expected ${message.length} > 256")
+                        return
+                    }
                     packetHandler.handle(packet as ChatMessageC2Packet?)
                     for (connect in connections) {
                         val data = connectionDataManager.getConnection(connect)
@@ -150,8 +158,9 @@ class ClientPacketReceiver(
                 }
             }
         } catch (e: Exception) {
+            conn.send(PacketFactory.disconnectPacket("Server","Error while decoding packet"))
            logger.error{"Error while decoding packet: " + e.message}
-            conn.close(1003, "invalidData")
+            conn.close(1003, "Error while decoding packet")
         }
     }
 
