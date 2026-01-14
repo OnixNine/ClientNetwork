@@ -16,6 +16,7 @@ class IrcEntity(val connection: WebSocket) {
     var uuid: String = ""
     var file: File? = null
     var authed: Boolean = false;
+    var lastMessage: String = ""
     fun sendPacket(packet: BasePacket) {
         connection.send(Encrypting.encrypt(packet.export()))
     }

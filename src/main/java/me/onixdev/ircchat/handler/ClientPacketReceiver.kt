@@ -79,6 +79,10 @@ class ClientPacketReceiver(
                 0 -> {
                     val entity = connectionDataManager.getConnection(conn)
                     if (entity != null) {
+                        if (entity.authed) {
+                            // Когда другой чел пытается залогиниться под логином этого когда тот уже авторизован?
+                            return
+                        }
                         packet = AuthC2Packet(json)
                         entity.userName = packet.username
                         entity.uuid = packet.sender
@@ -127,11 +131,18 @@ class ClientPacketReceiver(
                             entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!",101))
                             return
                         }
+                        if (entity.lastMessage == packet.message && entity.role != "dev") return
                         packetHandler.handle(packet as ChatMessageC2Packet?)
                         for (connect in connections) {
-                            val msg = ChatMessageS2packet(packet.sender, packet.message, entity.userName,entity.role).export()
-                            connect.send(Encrypting.encrypt(msg))
+                            val data = connectionDataManager.getConnection(connect)
+                            if (data != null) {
+                                if (data.authed) {
+                                    val msg = ChatMessageS2packet(packet.sender, packet.message, entity.userName,entity.role).export()
+                                    connect.send(Encrypting.encrypt(msg))
+                                }
+                            }
                         }
+                        entity.lastMessage = packet.message
                     }
 
                 }

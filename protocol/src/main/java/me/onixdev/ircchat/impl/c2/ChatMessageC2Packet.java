@@ -1,9 +1,8 @@
 package me.onixdev.ircchat.impl.c2;
 
 import me.onixdev.ircchat.base.BasePacket;
+import me.onixdev.ircchat.validation.ValidationHandler;
 import org.json.JSONObject;
-
-import java.util.UUID;
 
 public class ChatMessageC2Packet extends BasePacket {
     private String message,author = "";
@@ -14,6 +13,7 @@ public class ChatMessageC2Packet extends BasePacket {
     }
     public ChatMessageC2Packet(JSONObject data) {
         super(1,PacketBound.CLIENT,BasePacket.getUUID(data));
+        ValidationHandler.check(data,"message","author");
         this.message = data.getString("message");
         this.author = data.getString("author");
     }
