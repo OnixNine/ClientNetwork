@@ -47,3 +47,5 @@ config.json
 ### Mac OS ###
 .DS_Store
 /app.db
+/logs/*
+
