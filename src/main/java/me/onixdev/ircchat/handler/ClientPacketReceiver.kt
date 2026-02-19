@@ -10,6 +10,7 @@ import me.onixdev.ircchat.impl.s2.SystemMessageS2Packet
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.security.Encrypting
 import me.onixdev.ircchat.service.UserAuthService
+import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.packet.PacketFactory
 import me.onixdev.ircchat.service.task.GlobalScheduler
 import me.onixdev.ircchat.util.config.BaseConfig
@@ -23,7 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 class ClientPacketReceiver(
    private val config: BaseConfig,
     private val packetHandler: PacketExecuter,
-    private val connectionDataManager: ConnectionDataManager
+    private val connectionDataManager: ConnectionDataManager,private val dataBaseService: DataBaseService
 ) : WebSocketServer(InetSocketAddress(config.port)) {
 
     val logger = KotlinLogging.logger("PacketLogger")
@@ -92,9 +93,10 @@ class ClientPacketReceiver(
                     packet = AuthC2Packet(json)
                     entity.userName = packet.username
                     entity.uuid = packet.sender
-                    if (!entity.hasBeforeJoin()) {
+                    val aas = dataBaseService.findByUserName(packet.username)
+                    if (!aas.beforeJoined) {
                         entity.passHash = packet.pass
-                        entity.init()
+                        dataBaseService.create(packet.username,packet.pass)
                     } else {
                         entity.init()
                         val hash = UserAuthService.getHash(packet.pass)

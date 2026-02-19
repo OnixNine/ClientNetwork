@@ -3,6 +3,7 @@ package me.onixdev.ircchat
 import me.onixdev.ircchat.handler.ClientPacketReceiver
 import me.onixdev.ircchat.handler.PacketExecuter
 import me.onixdev.ircchat.manager.ConnectionDataManager
+import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import java.io.File
@@ -16,10 +17,11 @@ class Server {
     private var config: BaseConfig? = null
     private val packetExecuter = PacketExecuter()
     private val connectionDataManager = ConnectionDataManager()
+    private val dataBaseService = DataBaseService()
     fun start() {
         loadConfig()
         if (config != null) {
-            clientPacketReceiver = ClientPacketReceiver(config!!, packetExecuter, connectionDataManager)
+            clientPacketReceiver = ClientPacketReceiver(config!!, packetExecuter, connectionDataManager,dataBaseService)
             clientPacketReceiver!!.start()
             println("Server Started port ${config?.port}")
         }
