@@ -95,7 +95,7 @@ class ClientPacketReceiver(
                     entity.uuid = packet.sender
                     val aas = dataBaseService.findByUserName(packet.username)
                     if (!aas.beforeJoined) {
-                        entity.userName = aas.userName
+                        entity.userName = packet.username
                         entity.passHash = packet.pass
                         dataBaseService.create(packet.username,packet.pass)
                     } else {
