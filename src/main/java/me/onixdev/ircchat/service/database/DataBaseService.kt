@@ -3,15 +3,17 @@ package me.onixdev.ircchat.service.database
 import com.github.groundbreakingmc.mylib.database.Database
 import com.github.groundbreakingmc.mylib.database.InsertQuery
 import com.github.groundbreakingmc.mylib.database.SelectQuery
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.sql.SQLException
+import kotlin.system.exitProcess
 
 
-class DataBaseService() {
+class DataBaseService {
     lateinit var db: Database
 
     lateinit var findByUsername: SelectQuery
     lateinit var createUser: InsertQuery
-
+    val logger = KotlinLogging.logger("DataBaseLogger")
     init {
         init()
     }
@@ -30,16 +32,17 @@ class DataBaseService() {
             this.findByUsername = db.select()
                 .from("users")
                 .where("username = ?")
-                .prepare();
+                .prepare()
 
             this.createUser = db.insert("users")
                 .value("username", "")
                 .value("password", "")
                 .value("role", "user")
                 .value("joined", 0)
-                .prepare();
+                .prepare()
         } catch (e: SQLException) {
-            throw RuntimeException(e)
+            logger.error { "Error While Init DataBase E: ${e.message}}"  }
+            exitProcess(100)
         }
     }
 
