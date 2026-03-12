@@ -15,10 +15,10 @@ public class AuthFinishS2Packet extends BasePacket {
     }
     public AuthFinishS2Packet(JSONObject jsonObject) {
         super(0,PacketBound.CLIENT,BasePacket.getUUID(jsonObject));
-        this.role = jsonObject.getString("role");
-        this.username = jsonObject.getString("user");
-        code = jsonObject.getInt("code");
-        msg = jsonObject.getString("msg");
+        this.role = jsonObject.optString("role","user");
+        this.username = jsonObject.optString("user","userOne");
+        code = jsonObject.optInt("code");
+        msg = jsonObject.optString("msg");
 
     }
 
