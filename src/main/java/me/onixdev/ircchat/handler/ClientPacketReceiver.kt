@@ -35,7 +35,14 @@ class ClientPacketReceiver(
         GlobalScheduler.runTaskTimer("AuthTimeout",0.seconds,1.seconds) {
             checkTimeOut()
         }
+        GlobalScheduler.runTaskTimer("KeepAlive",0.seconds,10.seconds) {
+            sendKeepAlive()
+        }
 
+    }
+
+    private fun sendKeepAlive() {
+        TODO("Not yet implemented")
     }
 
     private fun checkTimeOut() {
