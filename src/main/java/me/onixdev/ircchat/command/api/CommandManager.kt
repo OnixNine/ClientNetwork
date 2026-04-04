@@ -1,6 +1,7 @@
 package me.onixdev.ircchat.command.api
 
 import me.onixdev.ircchat.command.impl.PrivetCommand
+import me.onixdev.ircchat.command.impl.UpdateRoleCommand
 
 
 class CommandManager {
@@ -8,7 +9,7 @@ class CommandManager {
     var prefix: String? = "."
 
     init {
-        register(PrivetCommand())
+        register(UpdateRoleCommand())
     }
 
     private fun register(command: Command?) {

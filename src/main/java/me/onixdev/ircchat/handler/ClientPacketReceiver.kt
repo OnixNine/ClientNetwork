@@ -126,6 +126,7 @@ class ClientPacketReceiver(
                         logger.info { "has: " + hash + " " + " pass: " + aas.passWord }
                         val valid = config.hash.verifyPassword(hash, aas.passWord)
                         if (valid) {
+                            entity.role = aas.role
                             entity.sendPacket(
                                 AuthFinishS2Packet(
                                     packet.sender,
