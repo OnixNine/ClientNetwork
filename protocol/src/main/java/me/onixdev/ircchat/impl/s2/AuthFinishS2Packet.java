@@ -1,5 +1,6 @@
 package me.onixdev.ircchat.impl.s2;
 
+import com.sun.net.httpserver.Authenticator;
 import me.onixdev.ircchat.base.BasePacket;
 import org.json.JSONObject;
 
@@ -46,4 +47,28 @@ public class AuthFinishS2Packet extends BasePacket {
         jsonObject.put("user",username);
         return jsonObject.toString();
     }
+    public AuthStatus getStatus() {
+        return AuthStatus.getById(getCode());
+    }
+    public enum AuthStatus {
+        Success(100),
+        InvalidPassWord(201),
+        NotFound(404);
+
+        private final int id;
+
+        AuthStatus(int i) {
+            id = i;
+        }
+
+        public int getId() {
+            return id;
+        }
+        static AuthStatus getById(int id) {
+            if (id == 100) return Success;
+            if (id == 201) return InvalidPassWord;
+            return NotFound;
+        }
+    }
+
 }

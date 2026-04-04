@@ -44,6 +44,7 @@ class ClientPacketReceiver(
                 if (data != null) {
                     val time = abs(System.currentTimeMillis().minus(data.createtime))
                     if (time > config.timeout) {
+                        logger.info("disconnecting due TimeOut")
                         connection.close(1003,"Надо было авторизоваться")
                         connectNoAuth.remove(connection)
                     }
@@ -101,7 +102,8 @@ class ClientPacketReceiver(
                     } else {
                         entity.init()
                         val hash = UserAuthService.getHash(packet.pass)
-                        val valid = UserAuthService.checkAuth(entity.passHash, hash)
+                        logger.info { "has: " + hash + " " + " pass: " + aas.passWord }
+                        val valid = UserAuthService.checkAuth(UserAuthService.getHash(aas.passWord), hash)
                         if (valid) {
                             entity.sendPacket(
                                 AuthFinishS2Packet(
