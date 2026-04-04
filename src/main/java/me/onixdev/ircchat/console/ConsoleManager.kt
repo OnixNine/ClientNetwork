@@ -7,7 +7,7 @@ object ConsoleManager {
     fun init() {
         for (i in 0..999) {
             var scanner = Scanner(System.`in`)
-            val string = scanner.next()
+            val string = scanner.nextLine()
             try {
                 Server.INSTANCE.commandManager.handleCommand(string)
             } catch (e: Exception) {

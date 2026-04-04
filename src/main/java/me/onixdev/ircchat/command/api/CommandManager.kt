@@ -17,7 +17,8 @@ class CommandManager {
 
     fun handleCommand(input: String) {
         val split: Array<String?> = input.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        if (split.size == 0) return
+        for (str in split) println("s: $str")
+        if (split.isEmpty()) return
 
         val commandName = split[0]
         val args = arrayOfNulls<String>(split.size - 1)

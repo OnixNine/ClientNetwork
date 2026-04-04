@@ -6,5 +6,5 @@ abstract class Command(val name: String?, val description: String?, val usage: S
         println(string)
     }
 
-    abstract fun execute(args: Array<String?>?)
+    abstract fun execute(args: Array<String?>)
 }
