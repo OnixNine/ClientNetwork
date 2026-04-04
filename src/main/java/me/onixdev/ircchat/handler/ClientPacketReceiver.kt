@@ -99,6 +99,15 @@ class ClientPacketReceiver(
                         entity.userName = packet.username
                         entity.passHash = packet.pass
                         dataBaseService.create(packet.username,packet.pass)
+                        entity.sendPacket(
+                            AuthFinishS2Packet(
+                                packet.sender,
+                                101,
+                                "Registered",
+                                entity.role,
+                                entity.userName
+                            )
+                        )
                     } else {
                         entity.init()
                         val hash = UserAuthService.getHash(packet.pass)

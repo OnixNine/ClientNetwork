@@ -53,6 +53,7 @@ public class AuthFinishS2Packet extends BasePacket {
     public enum AuthStatus {
         Success(100),
         InvalidPassWord(201),
+        Register(101),
         NotFound(404);
 
         private final int id;
@@ -67,6 +68,7 @@ public class AuthFinishS2Packet extends BasePacket {
         static AuthStatus getById(int id) {
             if (id == 100) return Success;
             if (id == 201) return InvalidPassWord;
+            if (id == 101) return Register;
             return NotFound;
         }
     }
