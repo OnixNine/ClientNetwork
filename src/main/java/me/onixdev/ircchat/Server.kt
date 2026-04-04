@@ -1,5 +1,7 @@
 package me.onixdev.ircchat
 
+import me.onixdev.ircchat.command.api.CommandManager
+import me.onixdev.ircchat.console.ConsoleManager
 import me.onixdev.ircchat.handler.ClientPacketReceiver
 import me.onixdev.ircchat.handler.PacketExecuter
 import me.onixdev.ircchat.manager.ConnectionDataManager
@@ -12,19 +14,22 @@ import java.io.IOException
 import java.nio.file.Files
 import kotlin.system.exitProcess
 
-class Server {
+enum class Server {
+    INSTANCE;
     private var clientPacketReceiver: ClientPacketReceiver? = null
     private var port = 0
     private var config: BaseConfig? = null
     private val packetExecuter = PacketExecuter()
     private val connectionDataManager = ConnectionDataManager()
     private val dataBaseService = DataBaseService()
+    val commandManager = CommandManager()
     fun start() {
         loadConfig()
         if (config != null) {
             clientPacketReceiver = ClientPacketReceiver(config!!, packetExecuter, connectionDataManager,dataBaseService)
             clientPacketReceiver!!.start()
             println("Server Started port ${config?.port}")
+            ConsoleManager.init()
         }
         else {
             println("Error while starting the server stoping")
@@ -72,5 +77,8 @@ class Server {
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
+    }
+    fun getDataBase() : DataBaseService {
+        return dataBaseService
     }
 }
