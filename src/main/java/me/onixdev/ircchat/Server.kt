@@ -3,6 +3,7 @@ package me.onixdev.ircchat
 import me.onixdev.ircchat.handler.ClientPacketReceiver
 import me.onixdev.ircchat.handler.PacketExecuter
 import me.onixdev.ircchat.manager.ConnectionDataManager
+import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
@@ -42,7 +43,8 @@ class Server {
             val jsonObject = JSONObject(json)
             port = jsonObject.getInt("port")
             val timeout = jsonObject.getInt("timeout")
-            config = BaseConfig(port, timeout)
+            config = BaseConfig(port, timeout, HashFactory.create(jsonObject.optString("hash","Sha256")))
+
 
         } catch (e: IOException) {
             throw RuntimeException(e)
@@ -64,6 +66,7 @@ class Server {
         val config = JSONObject()
         config.put("port", port)
         config.put("timeout", 20000)
+        config.put("hash","Sha256")
         try {
             Files.write(file.toPath(), config.toString().toByteArray())
         } catch (e: IOException) {
