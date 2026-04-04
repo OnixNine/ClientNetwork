@@ -7,6 +7,7 @@ import me.onixdev.ircchat.impl.c2.ChatMessageC2Packet
 import me.onixdev.ircchat.impl.c2.ClientDisconnectC2Packet
 import me.onixdev.ircchat.impl.s2.AuthFinishS2Packet
 import me.onixdev.ircchat.impl.s2.ChatMessageS2packet
+import me.onixdev.ircchat.impl.s2.KeepAliveS2Packet
 import me.onixdev.ircchat.impl.s2.SystemMessageS2Packet
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.security.Encrypting
@@ -42,7 +43,6 @@ class ClientPacketReceiver(
     }
 
     private fun sendKeepAlive() {
-        TODO("Not yet implemented")
     }
 
     private fun checkTimeOut() {
@@ -110,7 +110,7 @@ class ClientPacketReceiver(
                     if (!aas.beforeJoined) {
                         entity.userName = packet.username
                         entity.passHash = packet.pass
-                        dataBaseService.create(packet.username,packet.pass)
+                        dataBaseService.create(packet.username,config.hash.hashPassword(packet.pass))
                         entity.sendPacket(
                             AuthFinishS2Packet(
                                 packet.sender,
@@ -122,9 +122,9 @@ class ClientPacketReceiver(
                         )
                     } else {
                         entity.init()
-                        val hash = UserAuthService.getHash(packet.pass)
+                        val hash = config.hash.hashPassword(packet.pass)
                         logger.info { "has: " + hash + " " + " pass: " + aas.passWord }
-                        val valid = UserAuthService.checkAuth(UserAuthService.getHash(aas.passWord), hash)
+                        val valid = config.hash.verifyPassword(hash, aas.passWord)
                         if (valid) {
                             entity.sendPacket(
                                 AuthFinishS2Packet(
@@ -151,6 +151,7 @@ class ClientPacketReceiver(
                     }
                 } else {
                     conn.send(PacketFactory.disconnectPacket(packet.sender,"InvalidData[1]"))
+                    logger.info { "Disconecctiong due invalid Data" }
                     conn.close(1003, "invalidDataType")
                     return
                 }
