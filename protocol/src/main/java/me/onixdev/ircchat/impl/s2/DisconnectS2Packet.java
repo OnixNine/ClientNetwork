@@ -11,6 +11,7 @@ public class DisconnectS2Packet extends BasePacket {
     }
     public DisconnectS2Packet(JSONObject jsonObject) {
         super(5,PacketBound.CLIENT,BasePacket.getUUID(jsonObject));
+        this.message = jsonObject.optString("msg");
     }
 
     public String getMessage() {

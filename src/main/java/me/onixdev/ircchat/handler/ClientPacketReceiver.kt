@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import me.onixdev.ircchat.base.BasePacket
 import me.onixdev.ircchat.impl.c2.AuthC2Packet
 import me.onixdev.ircchat.impl.c2.ChatMessageC2Packet
+import me.onixdev.ircchat.impl.c2.ClientDisconnectC2Packet
 import me.onixdev.ircchat.impl.s2.AuthFinishS2Packet
 import me.onixdev.ircchat.impl.s2.ChatMessageS2packet
 import me.onixdev.ircchat.impl.s2.SystemMessageS2Packet
@@ -45,6 +46,7 @@ class ClientPacketReceiver(
                     val time = abs(System.currentTimeMillis().minus(data.createtime))
                     if (time > config.timeout) {
                         logger.info("disconnecting due TimeOut")
+                        connection.send(PacketFactory.disconnectPacket("","Вы не успели авторизоваться"))
                         connection.close(1003,"Надо было авторизоваться")
                         connectNoAuth.remove(connection)
                     }
@@ -83,6 +85,9 @@ class ClientPacketReceiver(
         lateinit var packet: BasePacket
 
             packet = PacketFactory.getPacketById(json)
+            if (packet is ClientDisconnectC2Packet) {
+                conn.close()
+            }
             logger.info { "received Packet ${packet.javaClass.simpleName} from ${conn.remoteSocketAddress}" }
             if (packet is AuthC2Packet) {
                 val entity = connectionDataManager.getConnection(conn)
@@ -154,8 +159,8 @@ class ClientPacketReceiver(
                     val message = packet.message
                     if (message.length > 256) {
                         logger.warn { "Message too long: ${message.length} bytes " }
+                        conn.send(PacketFactory.disconnectPacket(packet.sender,"Message to long expected ${message.length} > 256"))
                         conn.close(1003, "Message to long expected ${message.length} > 256")
-                        PacketFactory.disconnectPacket(packet.sender,"Message to long expected ${message.length} > 256")
                         return
                     }
                     packetHandler.handle(packet as ChatMessageC2Packet?)
