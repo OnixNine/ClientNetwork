@@ -11,6 +11,7 @@ class DataBaseService {
     lateinit var db: Database
     lateinit var createUser: InsertQuery
     val logger = KotlinLogging.logger("DataBaseLogger")
+
     init {
         init()
     }
@@ -32,9 +33,10 @@ class DataBaseService {
                 .value("password", "")
                 .value("role", "user")
                 .value("joined", 0)
+                .value("banned", 0)
                 .prepare()
         } catch (e: SQLException) {
-            logger.error { "Error While Init DataBase E: ${e.message}}"  }
+            logger.error { "Error While Init DataBase E: ${e.message}}" }
             exitProcess(100)
         }
     }
@@ -49,11 +51,11 @@ class DataBaseService {
                         it.getString("username"),
                         it.getString("password"),
                         it.getString("role"),
-                        it.getInt("joined") == 1
+                        it.getInt("joined") == 1, it.getInt("banned") == 1
                     )
                 }
         } catch (_: Exception) {
-            return TempedIrcEntity("invalid","aut","user",false)
+            return TempedIrcEntity("invalid", "aut", "user", beforeJoined = false, banned = false)
         }
     }
 
@@ -64,15 +66,16 @@ class DataBaseService {
 
     @Throws(SQLException::class)
     fun findById(id: Int): TempedIrcEntity {
-        return db.select().from("users").where("id = ?",id).fetchFirst {
+        return db.select().from("users").where("id = ?", id).fetchFirst {
             TempedIrcEntity(
                 it.getString("username"),
                 it.getString("password"),
                 it.getString("role"),
-                it.getInt("joined") == 1
+                it.getInt("joined") == 1, it.getInt("banned") == 1
             )
         }
     }
+
     fun updateRole(username: String, role: String) {
         db.update("users")
             .set("role", role)
