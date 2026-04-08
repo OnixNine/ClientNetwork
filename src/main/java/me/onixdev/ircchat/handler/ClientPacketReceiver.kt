@@ -7,11 +7,9 @@ import me.onixdev.ircchat.impl.c2.ChatMessageC2Packet
 import me.onixdev.ircchat.impl.c2.ClientDisconnectC2Packet
 import me.onixdev.ircchat.impl.s2.AuthFinishS2Packet
 import me.onixdev.ircchat.impl.s2.ChatMessageS2packet
-import me.onixdev.ircchat.impl.s2.KeepAliveS2Packet
 import me.onixdev.ircchat.impl.s2.SystemMessageS2Packet
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.security.Encrypting
-import me.onixdev.ircchat.service.UserAuthService
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.packet.PacketFactory
 import me.onixdev.ircchat.service.task.GlobalScheduler
@@ -24,19 +22,20 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 class ClientPacketReceiver(
-   private val config: BaseConfig,
+    private val config: BaseConfig,
     private val packetHandler: PacketExecuter,
-    private val connectionDataManager: ConnectionDataManager,private val dataBaseService: DataBaseService
+    private val connectionDataManager: ConnectionDataManager, private val dataBaseService: DataBaseService
 ) : WebSocketServer(InetSocketAddress(config.port)) {
 
     val logger = KotlinLogging.logger("PacketLogger")
     private val connections: MutableSet<WebSocket> = HashSet()
     private val connectNoAuth: MutableSet<WebSocket> = HashSet()
+
     init {
-        GlobalScheduler.runTaskTimer("AuthTimeout",0.seconds,1.seconds) {
+        GlobalScheduler.runTaskTimer("AuthTimeout", 0.seconds, 1.seconds) {
             checkTimeOut()
         }
-        GlobalScheduler.runTaskTimer("KeepAlive",0.seconds,10.seconds) {
+        GlobalScheduler.runTaskTimer("KeepAlive", 0.seconds, 10.seconds) {
             sendKeepAlive()
         }
 
@@ -53,8 +52,8 @@ class ClientPacketReceiver(
                     val time = abs(System.currentTimeMillis().minus(data.createtime))
                     if (time > config.timeout) {
                         logger.info("disconnecting due TimeOut")
-                        connection.send(PacketFactory.disconnectPacket("","Вы не успели авторизоваться"))
-                        connection.close(1003,"Надо было авторизоваться")
+                        connection.send(PacketFactory.disconnectPacket("", "Вы не успели авторизоваться"))
+                        connection.close(1003, "Надо было авторизоваться")
                         connectNoAuth.remove(connection)
                     }
                 }
@@ -78,18 +77,18 @@ class ClientPacketReceiver(
 
     override fun onMessage(conn: WebSocket, message: String?) {
         try {
-        val json: org.json.JSONObject = org.json.JSONObject(Encrypting.decrypt(message.toString()))
-        if (!json.has("id") || !json.has("sender")) {
-            println("Invalid packet: no id")
-            conn.closeConnection(1003, "invalidDATA")
-            return
-        }
-        val bound: String = json.getString("bound")
-        if (bound.isNotEmpty() && bound != "CLIENT") {
-            conn.close(1003, "invalidBound")
-            return
-        }
-        lateinit var packet: BasePacket
+            val json: org.json.JSONObject = org.json.JSONObject(Encrypting.decrypt(message.toString()))
+            if (!json.has("id") || !json.has("sender")) {
+                println("Invalid packet: no id")
+                conn.closeConnection(1003, "invalidDATA")
+                return
+            }
+            val bound: String = json.getString("bound")
+            if (bound.isNotEmpty() && bound != "CLIENT") {
+                conn.close(1003, "invalidBound")
+                return
+            }
+            lateinit var packet: BasePacket
 
             packet = PacketFactory.getPacketById(json)
             if (packet is ClientDisconnectC2Packet) {
@@ -110,7 +109,7 @@ class ClientPacketReceiver(
                     if (!aas.beforeJoined) {
                         entity.userName = packet.username
                         entity.passHash = packet.pass
-                        dataBaseService.create(packet.username,config.hash.hashPassword(packet.pass))
+                        dataBaseService.create(packet.username, config.hash.hashPassword(packet.pass))
                         entity.sendPacket(
                             AuthFinishS2Packet(
                                 packet.sender,
@@ -151,7 +150,7 @@ class ClientPacketReceiver(
                         }
                     }
                 } else {
-                    conn.send(PacketFactory.disconnectPacket(packet.sender,"InvalidData[1]"))
+                    conn.send(PacketFactory.disconnectPacket(packet.sender, "InvalidData[1]"))
                     logger.info { "Disconecctiong due invalid Data" }
                     conn.close(1003, "invalidDataType")
                     return
@@ -161,14 +160,19 @@ class ClientPacketReceiver(
                 val entity = connectionDataManager.getConnection(conn)
                 if (entity != null) {
                     if (!entity.authed) {
-                        entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!",101))
+                        entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!", 101))
                         return
                     }
                     if (entity.lastMessage == packet.message && entity.role != "dev") return
                     val message = packet.message
                     if (message.length > 256) {
                         logger.warn { "Message too long: ${message.length} bytes " }
-                        conn.send(PacketFactory.disconnectPacket(packet.sender,"Message to long expected ${message.length} > 256"))
+                        conn.send(
+                            PacketFactory.disconnectPacket(
+                                packet.sender,
+                                "Message to long expected ${message.length} > 256"
+                            )
+                        )
                         conn.close(1003, "Message to long expected ${message.length} > 256")
                         return
                     }
@@ -177,7 +181,12 @@ class ClientPacketReceiver(
                         val data = connectionDataManager.getConnection(connect)
                         if (data != null) {
                             if (data.authed) {
-                                val msg = ChatMessageS2packet(packet.sender, packet.message, entity.userName,entity.role).export()
+                                val msg = ChatMessageS2packet(
+                                    packet.sender,
+                                    packet.message,
+                                    entity.userName,
+                                    entity.role
+                                ).export()
                                 connect.send(Encrypting.encrypt(msg))
                             }
                         }
@@ -186,14 +195,14 @@ class ClientPacketReceiver(
                 }
             }
         } catch (e: Exception) {
-            conn.send(PacketFactory.disconnectPacket("Server","Error while decoding packet"))
-           logger.error{"Error while decoding packet: " + e.message}
+            conn.send(PacketFactory.disconnectPacket("Server", "Error while decoding packet"))
+            logger.error { "Error while decoding packet: " + e.message }
             conn.close(1003, "Error while decoding packet")
         }
     }
 
     override fun onError(conn: WebSocket?, ex: Exception) {
-        logger.error{"Error : " + ex.message}
+        logger.error { "Error : " + ex.message }
         ex.printStackTrace()
     }
 

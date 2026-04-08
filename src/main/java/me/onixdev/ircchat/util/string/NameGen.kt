@@ -3,6 +3,7 @@ package me.onixdev.ircchat.util.string
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.abs
 import kotlin.math.max
+
 @SuppressWarnings("all")
 @Suppress("all")
 object NameGen {

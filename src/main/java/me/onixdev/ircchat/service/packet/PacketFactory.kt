@@ -10,7 +10,7 @@ import me.onixdev.ircchat.security.Encrypting
 import org.json.JSONObject
 
 object PacketFactory {
-    fun getPacketById(json: JSONObject) : BasePacket {
+    fun getPacketById(json: JSONObject): BasePacket {
         return when (json.getInt("id")) {
             0 -> {
                 AuthC2Packet(json)
@@ -22,7 +22,8 @@ object PacketFactory {
             else -> null
         }!!
     }
-    fun disconnectPacket(reason: String,sender: String) : String {
-        return Encrypting.encrypt(DisconnectS2Packet(reason,sender).export())
+
+    fun disconnectPacket(reason: String, sender: String): String {
+        return Encrypting.encrypt(DisconnectS2Packet(reason, sender).export())
     }
 }

@@ -44,6 +44,7 @@ object GlobalScheduler {
             false
         }
     }
+
     fun cancelAll() {
         tasks.values.forEach { it.cancel() }
         tasks.clear()

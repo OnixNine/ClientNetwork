@@ -16,6 +16,7 @@ import kotlin.system.exitProcess
 
 enum class Server {
     INSTANCE;
+
     private var clientPacketReceiver: ClientPacketReceiver? = null
     private var port = 0
     private var config: BaseConfig? = null
@@ -26,12 +27,12 @@ enum class Server {
     fun start() {
         loadConfig()
         if (config != null) {
-            clientPacketReceiver = ClientPacketReceiver(config!!, packetExecuter, connectionDataManager,dataBaseService)
+            clientPacketReceiver =
+                ClientPacketReceiver(config!!, packetExecuter, connectionDataManager, dataBaseService)
             clientPacketReceiver!!.start()
             println("Server Started port ${config?.port}")
             ConsoleManager.init()
-        }
-        else {
+        } else {
             println("Error while starting the server stoping")
             exitProcess(1)
         }
@@ -48,7 +49,7 @@ enum class Server {
             val jsonObject = JSONObject(json)
             port = jsonObject.getInt("port")
             val timeout = jsonObject.getInt("timeout")
-            config = BaseConfig(port, timeout, HashFactory.create(jsonObject.optString("hash","Sha256")))
+            config = BaseConfig(port, timeout, HashFactory.create(jsonObject.optString("hash", "Sha256")))
 
 
         } catch (e: IOException) {
@@ -71,14 +72,15 @@ enum class Server {
         val config = JSONObject()
         config.put("port", port)
         config.put("timeout", 20000)
-        config.put("hash","Sha256")
+        config.put("hash", "Sha256")
         try {
             Files.write(file.toPath(), config.toString().toByteArray())
         } catch (e: IOException) {
             throw RuntimeException(e)
         }
     }
-    fun getDataBase() : DataBaseService {
+
+    fun getDataBase(): DataBaseService {
         return dataBaseService
     }
 }
