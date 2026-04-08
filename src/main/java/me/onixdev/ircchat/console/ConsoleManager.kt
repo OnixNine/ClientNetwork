@@ -4,6 +4,7 @@ import me.onixdev.ircchat.Server
 import java.util.*
 
 object ConsoleManager {
+    @Suppress("all")
     fun init() {
         for (i in 0..999) {
             var scanner = Scanner(System.`in`)

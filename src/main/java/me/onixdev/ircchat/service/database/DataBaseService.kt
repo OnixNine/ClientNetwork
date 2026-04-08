@@ -60,8 +60,8 @@ class DataBaseService {
     }
 
     @Throws(SQLException::class)
-    fun create(username: String?, email: String?) {
-        createUser.execute(username!!, email!!, "user", 1)
+    fun create(username: String, passwordHash: String) {
+        createUser.execute(username, passwordHash, "user", 1)
     }
 
     @Throws(SQLException::class)

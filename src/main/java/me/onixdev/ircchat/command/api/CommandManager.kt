@@ -1,6 +1,5 @@
 package me.onixdev.ircchat.command.api
 
-import me.onixdev.ircchat.command.impl.PrivetCommand
 import me.onixdev.ircchat.command.impl.UpdateRoleCommand
 
 
@@ -18,7 +17,6 @@ class CommandManager {
 
     fun handleCommand(input: String) {
         val split: Array<String?> = input.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        for (str in split) println("s: $str")
         if (split.isEmpty()) return
 
         val commandName = split[0]
