@@ -1,5 +1,6 @@
 package me.onixdev.ircchat.handler
 
+import dev.onix.EventManager
 import io.github.oshai.kotlinlogging.KotlinLogging
 import me.onixdev.ircchat.base.BasePacket
 import me.onixdev.ircchat.impl.c2.AuthC2Packet
@@ -14,6 +15,7 @@ import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.packet.PacketFactory
 import me.onixdev.ircchat.service.task.GlobalScheduler
 import me.onixdev.ircchat.util.config.BaseConfig
+import me.onixdev.ircchat.util.events.ClientMessageSendEvent
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
@@ -163,8 +165,11 @@ class ClientPacketReceiver(
                         entity.sendPacket(SystemMessageS2Packet(packet.sender, "you not authenticate!", 101))
                         return
                     }
-                    if (entity.lastMessage == packet.message && entity.role != "dev") return
+//                    if (entity.lastMessage == packet.message && entity.role != "dev") return
                     val message = packet.message
+                    val event = ClientMessageSendEvent(entity,message)
+                    EventManager.callEvent(event)
+                    if (event.isCancelled) return
                     if (message.length > 256) {
                         logger.warn { "Message too long: ${message.length} bytes " }
                         conn.send(

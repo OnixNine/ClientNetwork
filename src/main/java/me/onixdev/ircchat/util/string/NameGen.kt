@@ -67,7 +67,7 @@ object NameGen {
         val random = ThreadLocalRandom.current()
 
         for (i in 0..<length) {
-            sb.append(DIGITS.get(random.nextInt(DIGITS.length)))
+            sb.append(DIGITS[random.nextInt(DIGITS.length)])
         }
 
         return sb.toString()
@@ -80,10 +80,10 @@ object NameGen {
         val random = ThreadLocalRandom.current()
 
 
-        sb.append("lIoO".get(random.nextInt(4)))
+        sb.append("lIoO"[random.nextInt(4)])
 
         for (i in 1..<length) {
-            sb.append(confusing.get(random.nextInt(confusing.length)))
+            sb.append(confusing[random.nextInt(confusing.length)])
         }
 
         return sb.toString()
@@ -97,10 +97,10 @@ object NameGen {
         var uppercase = true
         for (i in 0..<length) {
             if (uppercase) {
-                sb.append(UPPERCASE.get(random.nextInt(UPPERCASE.length)))
+                sb.append(UPPERCASE[random.nextInt(UPPERCASE.length)])
                 uppercase = false
             } else {
-                sb.append(LOWERCASE.get(random.nextInt(LOWERCASE.length)))
+                sb.append(LOWERCASE[random.nextInt(LOWERCASE.length)])
                 if (random.nextInt(5) == 0) {
                     uppercase = true
                 }
@@ -133,7 +133,7 @@ object NameGen {
         }
 
 
-        if (sb.length == 0) {
+        if (sb.isEmpty()) {
             sb.append((0x200B + (index % 5)).toChar())
         }
 
@@ -162,7 +162,7 @@ object NameGen {
         }
 
 
-        if (sb.length == 0) {
+        if (sb.isEmpty()) {
             sb.append((0x200B + random.nextInt(5)).toChar())
         }
 
@@ -183,7 +183,7 @@ object NameGen {
             when (charType) {
                 0 -> {
                     val poolIdx = Math.floorMod(seed + i * 17, CHAR_POOL.length)
-                    c = CHAR_POOL.get(poolIdx)
+                    c = CHAR_POOL[poolIdx]
                 }
 
                 1 -> c = (0x200B + Math.floorMod(seed + i, 5)).toChar()
@@ -195,7 +195,7 @@ object NameGen {
         }
 
 
-        if (sb.length == 0) {
+        if (sb.isEmpty()) {
             sb.append((0x200B + Math.floorMod(index, 5)).toChar())
         }
 
@@ -211,14 +211,13 @@ object NameGen {
 
         for (i in 0..<len) {
             val charType = Math.floorMod(seed + i, 5)
-            val c: Char
 
-            when (charType) {
-                0 -> c = CHAR_POOL.get(Math.floorMod(seed + i * 17, CHAR_POOL.length))
-                1 -> c = (0x200B + Math.floorMod(seed + i, 5)).toChar()
-                2 -> c = (0x0300 + Math.floorMod(seed + i * 7, 50)).toChar()
-                3 -> c = (0x4E00 + Math.floorMod(seed + i * 13, 100)).toChar()
-                else -> c = (0x0600 + Math.floorMod(seed + i * 11, 50)).toChar()
+            val c: Char = when (charType) {
+                0 -> CHAR_POOL[Math.floorMod(seed + i * 17, CHAR_POOL.length)]
+                1 -> (0x200B + Math.floorMod(seed + i, 5)).toChar()
+                2 -> (0x0300 + Math.floorMod(seed + i * 7, 50)).toChar()
+                3 -> (0x4E00 + Math.floorMod(seed + i * 13, 100)).toChar()
+                else -> (0x0600 + Math.floorMod(seed + i * 11, 50)).toChar()
             }
             sb.append(c)
         }

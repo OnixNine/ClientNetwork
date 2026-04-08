@@ -23,6 +23,7 @@ dependencies {
     implementation 'org.slf4j:slf4j-simple:2.0.3'
     implementation 'com.github.groundbreakingmc:MyLib:e2865d2'
     implementation("org.xerial:sqlite-jdbc:3.51.2.0")
+    implementation("com.github.OnixNine:OnixEvents:c54a0de95a")
 }
 
 kotlin {
