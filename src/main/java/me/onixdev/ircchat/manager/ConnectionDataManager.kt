@@ -16,4 +16,7 @@ class ConnectionDataManager {
     fun getConnection(connection: WebSocket): IrcEntity? {
         return connections[connection]
     }
+    fun getAll(): MutableCollection<IrcEntity> {
+        return connections.values
+    }
 }

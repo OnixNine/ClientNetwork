@@ -26,7 +26,7 @@ class DataBaseService {
         db = Database.sqlite("app.db")
         try {
             db.connection()
-            db.createTables("CREATE TABLE IF NOT EXISTS users(" + "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + "username VARCHAR(255) NOT NULL, " + "password VARCHAR(255) NOT NULL, " + "role VARCHAR(255) NOT NULL, " + "joined INTEGER NOT NULL)")
+            db.createTables("CREATE TABLE IF NOT EXISTS users(" + "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + "username VARCHAR(255) NOT NULL, " + "password VARCHAR(255) NOT NULL, " + "role VARCHAR(255) NOT NULL, " + "joined INTEGER NOT NULL, "+"banned INTEGER NOT NULL)")
 
             this.createUser = db.insert("users")
                 .value("username", "")
@@ -61,7 +61,7 @@ class DataBaseService {
 
     @Throws(SQLException::class)
     fun create(username: String, passwordHash: String) {
-        createUser.execute(username, passwordHash, "user", 1)
+        createUser.execute(username, passwordHash, "user", 1,0)
     }
 
     @Throws(SQLException::class)

@@ -7,7 +7,10 @@ import me.onixdev.ircchat.handler.PacketExecuter
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
+import me.onixdev.ircchat.service.message.BroadCastMessageService
+import me.onixdev.ircchat.service.message.validation.MessageLengthLimit
 import me.onixdev.ircchat.util.config.BaseConfig
+import me.onixdev.ircchat.util.events.ClientMessageSendEvent
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
@@ -21,7 +24,7 @@ enum class Server {
     private var port = 0
     private var config: BaseConfig? = null
     private val packetExecuter = PacketExecuter()
-    private val connectionDataManager = ConnectionDataManager()
+    val connectionDataManager = ConnectionDataManager()
     private val dataBaseService = DataBaseService()
     val commandManager = CommandManager()
     fun start() {
@@ -31,11 +34,17 @@ enum class Server {
                 ClientPacketReceiver(config!!, packetExecuter, connectionDataManager, dataBaseService)
             clientPacketReceiver!!.start()
             println("Server Started port ${config?.port}")
+            initListeners()
             ConsoleManager.init()
         } else {
             println("Error while starting the server stoping")
             exitProcess(1)
         }
+    }
+
+    private fun initListeners() {
+        MessageLengthLimit()
+       BroadCastMessageService()
     }
 
     private fun loadConfig() {

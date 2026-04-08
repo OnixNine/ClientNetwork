@@ -167,7 +167,7 @@ class ClientPacketReceiver(
                     }
 //                    if (entity.lastMessage == packet.message && entity.role != "dev") return
                     val message = packet.message
-                    val event = ClientMessageSendEvent(entity,message)
+                    val event = ClientMessageSendEvent(entity,message,packet.author,entity.role)
                     EventManager.callEvent(event)
                     if (event.isCancelled) return
                     if (message.length > 256) {
@@ -200,6 +200,7 @@ class ClientPacketReceiver(
                 }
             }
         } catch (e: Exception) {
+            e.printStackTrace()
             conn.send(PacketFactory.disconnectPacket("Server", "Error while decoding packet"))
             logger.error { "Error while decoding packet: " + e.message }
             conn.close(1003, "Error while decoding packet")
