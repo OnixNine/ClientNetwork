@@ -39,6 +39,11 @@ tasks.withType(JavaCompile).configureEach {
 }
 tasks.shadowJar {
     archiveClassifier.set("")
+    manifest {
+        attributes(
+                'Main-Class': 'me.onixdev.ircchat.Main'
+        )
+    }
 }
 
 tasks.build.dependsOn tasks.shadowJar
