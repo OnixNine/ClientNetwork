@@ -35,6 +35,7 @@ class DataBaseService {
                 .value("joined", 0)
                 .value("banned", 0)
                 .prepare()
+            logger.info { "DataBase Inited" }
         } catch (e: SQLException) {
             logger.error { "Error While Init DataBase E: ${e.message}}" }
             exitProcess(100)

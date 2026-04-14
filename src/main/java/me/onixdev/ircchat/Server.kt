@@ -94,4 +94,9 @@ enum class Server {
     fun getDataBase(): DataBaseService {
         return dataBaseService
     }
+
+    fun stop() {
+        println("Stoping")
+        exitProcess(0)
+    }
 }
