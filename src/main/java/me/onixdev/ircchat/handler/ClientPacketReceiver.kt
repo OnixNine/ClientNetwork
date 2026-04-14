@@ -181,22 +181,22 @@ class ClientPacketReceiver(
                         conn.close(1003, "Message to long expected ${message.length} > 256")
                         return
                     }
-                    packetHandler.handle(packet as ChatMessageC2Packet?)
-                    for (connect in connections) {
-                        val data = connectionDataManager.getConnection(connect)
-                        if (data != null) {
-                            if (data.authed) {
-                                val msg = ChatMessageS2packet(
-                                    packet.sender,
-                                    packet.message,
-                                    entity.userName,
-                                    entity.role
-                                ).export()
-                                connect.send(Encrypting.encrypt(msg))
-                            }
-                        }
-                    }
-                    entity.lastMessage = packet.message
+//                    packetHandler.handle(packet as ChatMessageC2Packet?)
+//                    for (connect in connections) {
+//                        val data = connectionDataManager.getConnection(connect)
+//                        if (data != null) {
+//                            if (data.authed) {
+//                                val msg = ChatMessageS2packet(
+//                                    packet.sender,
+//                                    packet.message,
+//                                    entity.userName,
+//                                    entity.role
+//                                ).export()
+//                                connect.send(Encrypting.encrypt(msg))
+//                            }
+//                        }
+//                    }
+//                    entity.lastMessage = packet.message
                 }
             }
         } catch (e: Exception) {
