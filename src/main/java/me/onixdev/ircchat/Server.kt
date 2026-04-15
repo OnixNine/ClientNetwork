@@ -1,5 +1,6 @@
 package me.onixdev.ircchat
 
+import me.onixdev.ircchat.base.Encrypting
 import me.onixdev.ircchat.command.api.CommandManager
 import me.onixdev.ircchat.console.ConsoleManager
 import me.onixdev.ircchat.handler.ClientPacketReceiver
@@ -60,6 +61,8 @@ enum class Server {
             val jsonObject = JSONObject(json)
             port = jsonObject.getInt("port")
             val timeout = jsonObject.getInt("timeout")
+            val key = jsonObject.optString("key","41dd854w8s")
+            Encrypting.INSTANCE.key = key
             config = BaseConfig(port, timeout, HashFactory.create(jsonObject.optString("hash", "Sha256")))
 
 
@@ -84,6 +87,7 @@ enum class Server {
         config.put("port", port)
         config.put("timeout", 20000)
         config.put("hash", "Sha256")
+        config.put("key","41dd854w8s")
         try {
             Files.write(file.toPath(), config.toString().toByteArray())
         } catch (e: IOException) {

@@ -3,6 +3,7 @@ package me.onixdev.ircchat.handler
 import dev.onix.EventManager
 import io.github.oshai.kotlinlogging.KotlinLogging
 import me.onixdev.ircchat.base.BasePacket
+import me.onixdev.ircchat.base.Encrypting
 import me.onixdev.ircchat.impl.c2.AuthC2Packet
 import me.onixdev.ircchat.impl.c2.ChatMessageC2Packet
 import me.onixdev.ircchat.impl.c2.ClientDisconnectC2Packet
@@ -10,7 +11,6 @@ import me.onixdev.ircchat.impl.s2.AuthFinishS2Packet
 import me.onixdev.ircchat.impl.s2.ChatMessageS2packet
 import me.onixdev.ircchat.impl.s2.SystemMessageS2Packet
 import me.onixdev.ircchat.manager.ConnectionDataManager
-import me.onixdev.ircchat.security.Encrypting
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.packet.PacketFactory
 import me.onixdev.ircchat.service.task.GlobalScheduler
@@ -79,7 +79,7 @@ class ClientPacketReceiver(
 
     override fun onMessage(conn: WebSocket, message: String?) {
         try {
-            val json: org.json.JSONObject = org.json.JSONObject(Encrypting.decrypt(message.toString()))
+            val json: org.json.JSONObject = org.json.JSONObject(Encrypting.INSTANCE.decrypt(message.toString()))
             if (!json.has("id") || !json.has("sender")) {
                 println("Invalid packet: no id")
                 conn.closeConnection(1003, "invalidDATA")

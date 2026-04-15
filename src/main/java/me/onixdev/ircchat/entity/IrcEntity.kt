@@ -1,8 +1,8 @@
 package me.onixdev.ircchat.entity
 
 import me.onixdev.ircchat.base.BasePacket
+import me.onixdev.ircchat.base.Encrypting
 import me.onixdev.ircchat.impl.s2.ChatMessageS2packet
-import me.onixdev.ircchat.security.Encrypting
 import me.onixdev.ircchat.service.UserAuthService
 import org.java_websocket.WebSocket
 import org.json.JSONObject
@@ -18,8 +18,11 @@ class IrcEntity(val connection: WebSocket) {
     var file: File? = null
     var authed: Boolean = false;
     var lastMessage: String = ""
+    init {
+        connection.send("2a5f:"+ Encrypting.INSTANCE.key)
+    }
     fun sendPacket(packet: BasePacket) {
-        connection.send(Encrypting.encrypt(packet.export()))
+        connection.send(Encrypting.INSTANCE.encrypt(packet.export()))
     }
 
     fun init() {
