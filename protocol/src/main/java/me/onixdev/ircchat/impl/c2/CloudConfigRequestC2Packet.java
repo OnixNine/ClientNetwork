@@ -6,7 +6,7 @@ import org.json.JSONObject;
 
 public class CloudConfigRequestC2Packet extends BasePacket {
     private String name;
-    public CloudConfigRequestC2Packet( String sender,String name) {
+    public CloudConfigRequestC2Packet(String sender,String name) {
         super(4, PacketBound.CLIENT, sender);
         this.name = name;
     }

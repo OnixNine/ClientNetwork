@@ -1,6 +1,7 @@
 package me.onixdev.ircchat.entity
 
 import me.onixdev.ircchat.base.BasePacket
+import me.onixdev.ircchat.impl.s2.ChatMessageS2packet
 import me.onixdev.ircchat.security.Encrypting
 import me.onixdev.ircchat.service.UserAuthService
 import org.java_websocket.WebSocket
@@ -47,6 +48,10 @@ class IrcEntity(val connection: WebSocket) {
 
     fun hasBeforeJoin(): Boolean {
         return File("user/$userName.json").exists()
+    }
+
+    fun sendMessage(message: String,author: String,role: String) {
+        sendPacket(ChatMessageS2packet("",message,author,role))
     }
 
 }
