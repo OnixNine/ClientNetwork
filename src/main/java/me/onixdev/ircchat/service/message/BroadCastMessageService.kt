@@ -14,6 +14,7 @@ class BroadCastMessageService : Listener {
     @EventHandler(value = Priority.LOWEST)
     fun onMessage(event: ClientMessageSendEvent) {
         if (event.isCancelled) return
+        println("BRD")
         Server.INSTANCE.connectionDataManager.getAll().forEach { entity->
             if (entity.authed && event.user != entity) entity.sendMessage(event.message,event.author,event.role)
         }

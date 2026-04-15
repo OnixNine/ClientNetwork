@@ -19,7 +19,7 @@ class MessageValidationPattern : Listener {
         println("Registered")
     }
 
-    @EventHandler(value = Priority.LOWEST)
+    @EventHandler(value = Priority.HIGHEST)
     fun onMessage(event: ClientMessageSendEvent) {
         val message = event.message
         println("message $message")
