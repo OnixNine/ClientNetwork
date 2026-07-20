@@ -40,6 +40,10 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.shadowJar {
     archiveClassifier.set("")
+    relocate("io.netty", "dev.test.netty") {
+        exclude("META-INF/**")
+        exclude("module-info.class")
+    }
     manifest {
         attributes(
             "Main-Class" to "me.onixdev.ircchat.Main"

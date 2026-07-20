@@ -15,7 +15,6 @@ dependencies {
 }
 
 tasks.shadowJar {
-    archiveClassifier.set("")
     relocate("io.netty", "dev.test.netty") {
         exclude("META-INF/**")
         exclude("module-info.class")
