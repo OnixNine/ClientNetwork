@@ -6,7 +6,6 @@ import me.onixdev.ircchat.entity.IrcEntity;
 import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket
-import me.onixdev.ircchat.manager.ConnectionDataManager;
 import me.onixdev.ircchat.service.database.DataBaseService;
 import me.onixdev.ircchat.util.config.BaseConfig;
 import me.onixdev.ircchat.util.events.ClientMessageSendEvent;
@@ -19,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @NetworkListener
 class NetworkServerHandler(
         private val config: BaseConfig,
-        private val connectionDataManager: ConnectionDataManager,
         private val dataBaseService: DataBaseService
 ) {
     private val logger = KotlinLogging.logger("ServerHandler")

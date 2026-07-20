@@ -1,4 +1,4 @@
-package me.onixdev.ircchat.service.message
+/*package me.onixdev.ircchat.service.message
 
 import dev.onix.EventHandler
 import dev.onix.EventManager
@@ -19,4 +19,4 @@ class BroadCastMessageService : Listener {
             if (entity.authed) entity.sendMessage(event.message,event.author,event.role)
         }
     }
-}
+}*/

@@ -10,12 +10,8 @@ import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.impl.s2.codecs.AuthResultPacketCodec
 import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket
-import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
-import me.onixdev.ircchat.service.message.BroadCastMessageService
-import me.onixdev.ircchat.service.message.validation.MessageLengthLimit
-import me.onixdev.ircchat.service.message.validation.MessageValidationPattern
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import ru.kseonyt.net.Net
@@ -37,7 +33,6 @@ enum class Server {
     private var udpEndpoint: UdpEndpoint? = null
     private var port = 0
     private var config: BaseConfig? = null
-    private val connectionDataManager = ConnectionDataManager()
     private val dataBaseService = DataBaseService()
     lateinit var  handler:NetworkServerHandler
     val commandManager = CommandManager()
@@ -47,7 +42,7 @@ enum class Server {
         if (config != null) {
             val registry = createPacketRegistry()
 
-            handler = NetworkServerHandler(config!!, connectionDataManager, dataBaseService)
+            handler = NetworkServerHandler(config!!, dataBaseService)
             networkServer = Net.server()
                 .port(config!!.port)
                 .codec(registry)
@@ -86,9 +81,9 @@ enum class Server {
     }
 
     private fun initListeners() {
-        MessageValidationPattern()
-        MessageLengthLimit()
-        BroadCastMessageService()
+//        MessageValidationPattern()
+//        MessageLengthLimit()
+//        BroadCastMessageService()
     }
 
     private fun loadConfig() {
