@@ -11,6 +11,7 @@ public class AuthResultPacketCodec implements PacketCodec<AuthResultPacket> {
     public void encode(AuthResultPacket authResultPacket, PacketBuffer packetBuffer) throws PacketEncodeException {
         packetBuffer.writeString(authResultPacket.sender());
         packetBuffer.writeVarInt(authResultPacket.code());
+        packetBuffer.writeString(authResultPacket.msg()); // <- добавить
         packetBuffer.writeString(authResultPacket.r());
         packetBuffer.writeString(authResultPacket.username());
     }

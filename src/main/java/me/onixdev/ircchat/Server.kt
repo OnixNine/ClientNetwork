@@ -76,7 +76,7 @@ enum class Server {
         registry.register(2, ClientChatMessagePacket::class.java,
             ClientChatMessagePacketCodec()
         )
-        registry.register(100, AuthResultPacket::class.java, AuthResultPacketCodec())
+        registry.register(101, AuthResultPacket::class.java, AuthResultPacketCodec())
         return registry
     }
 
