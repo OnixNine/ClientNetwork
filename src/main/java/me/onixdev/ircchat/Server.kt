@@ -53,7 +53,7 @@ enum class Server {
                 .codec(registry)
                 .compress(256)
                 //.encrypt(generateKey())
-                .interceptor(LoggingInterceptor())
+               // .interceptor(LoggingInterceptor())
                 .listener(handler)
                 .start()
             networkServer!!.onConnect { ctx -> handler.onConnect(ctx) }
