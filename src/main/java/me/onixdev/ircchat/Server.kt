@@ -3,6 +3,7 @@ package me.onixdev.ircchat
 import me.onixdev.ircchat.base.Encrypting
 import me.onixdev.ircchat.command.api.CommandManager
 import me.onixdev.ircchat.console.ConsoleManager
+import me.onixdev.ircchat.handler.LoggingInterceptor
 import me.onixdev.ircchat.handler.NetworkServerHandler
 import me.onixdev.ircchat.impl.c2.codecs.AuthRequestPacketCodec
 import me.onixdev.ircchat.impl.c2.codecs.ClientChatMessagePacketCodec
@@ -15,9 +16,13 @@ import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import ru.kseonyt.net.Net
+import ru.kseonyt.net.context.NetworkContext
 import ru.kseonyt.net.packet.DefaultPacketRegistry
+import ru.kseonyt.net.packet.Packet
 import ru.kseonyt.net.packet.PacketCodec
 import ru.kseonyt.net.packet.PacketRegistry
+import ru.kseonyt.net.pipeline.InterceptorChain
+import ru.kseonyt.net.pipeline.PacketInterceptor
 import ru.kseonyt.net.server.NetworkServer
 import ru.kseonyt.net.udp.ConnectedUdpClient
 import ru.kseonyt.net.udp.UdpEndpoint
@@ -47,7 +52,8 @@ enum class Server {
                 .port(config!!.port)
                 .codec(registry)
                 .compress(256)
-                .encrypt(generateKey())
+                //.encrypt(generateKey())
+                .interceptor(LoggingInterceptor())
                 .listener(handler)
                 .start()
             networkServer!!.onConnect { ctx -> handler.onConnect(ctx) }

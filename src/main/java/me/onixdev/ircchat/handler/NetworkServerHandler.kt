@@ -31,13 +31,15 @@ class NetworkServerHandler(
 
     @PacketHandler
     fun onAuthRequest(pkt: AuthRequestPacket, ctx: NetworkContext) {
+        println("AuthRequest")
         val entity = IrcEntity(ctx).apply {
             userName = pkt.username
             uuid = ctx.remoteAddress.toString()
         }
 
         val user = dataBaseService.findByUserName(pkt.username)
-        if (user == null) {
+        if (!user.beforeJoined) {
+            println("AAAA")
             // Регистрация
             dataBaseService.create(pkt.username, config.hash.hashPassword(pkt.password))
             entity.role = "user"
