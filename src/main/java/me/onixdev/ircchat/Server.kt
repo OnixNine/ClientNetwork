@@ -70,7 +70,7 @@ enum class Server {
 
     private fun createPacketRegistry(): PacketRegistry {
         val registry = DefaultPacketRegistry()
-        registry.register(1, AuthRequestPacket::class.java,
+        registry.register(0, AuthRequestPacket::class.java,
             AuthRequestPacketCodec()
         )
         registry.register(2, ClientChatMessagePacket::class.java,

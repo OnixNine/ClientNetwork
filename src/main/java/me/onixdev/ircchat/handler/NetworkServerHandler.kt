@@ -101,6 +101,7 @@ class NetworkServerHandler(
         contexts.add(ctx)
         ctx.attr(TIMEOUT_KEY).set(System.currentTimeMillis())
         logger.info("New connection from ${ctx.remoteAddress}")
+        ctx.send(AuthResultPacket("",101, "Registered", "", "ssse"))
     }
 
     // Обработчик закрытых соединений

@@ -5,7 +5,7 @@ import ru.kseonyt.net.annotation.Codec;
 import ru.kseonyt.net.annotation.PacketId;
 import ru.kseonyt.net.packet.Packet;
 
-@PacketId(1)
+@PacketId(0)
 @Codec(AuthRequestPacketCodec.class)
 public record AuthRequestPacket(String sender, String username, String password) implements Packet {
 }
