@@ -16,6 +16,6 @@ class BroadCastMessageService : Listener {
         if (event.isCancelled) return
         Server.INSTANCE.connectionDataManager!!.getAll()
             .filter { it.authed }
-            .forEach { it.sendMessage(event.message, event.author, event.role) }
+            .forEach { it.sendMessage(event.user.toUserEntry(), event.message) }
     }
 }

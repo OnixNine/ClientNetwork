@@ -47,7 +47,7 @@ class NetworkServerHandler(
         val entity = connectionDataManager.getConnection(ctx) ?: return
         if (!entity.authed) return
 
-        val event = ClientMessageSendEvent(entity, pkt.message, entity.userName, entity.role)
+        val event = ClientMessageSendEvent(entity, pkt.message)
         EventManager.callEvent(event)
         if (event.isCancelled) return
     }
