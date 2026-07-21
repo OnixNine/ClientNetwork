@@ -1,4 +1,4 @@
-package me.onixdev.ircchat.manager
+/*package me.onixdev.ircchat.manager
 
 import me.onixdev.ircchat.entity.IrcEntity
 import org.java_websocket.WebSocket
@@ -19,4 +19,4 @@ class ConnectionDataManager {
     fun getAll(): MutableCollection<IrcEntity> {
         return connections.values
     }
-}
+}*/

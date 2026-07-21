@@ -1,4 +1,4 @@
-package me.onixdev.ircchat.service.message.validation
+/*package me.onixdev.ircchat.service.message.validation
 
 import dev.onix.EventHandler
 import dev.onix.EventManager
@@ -20,4 +20,4 @@ class MessageSpamDelay : Listener {
         }
     }
 
-}
+}*/

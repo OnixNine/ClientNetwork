@@ -1,60 +1,32 @@
 package me.onixdev.ircchat.entity
 
-import me.onixdev.ircchat.base.BasePacket
-import me.onixdev.ircchat.base.Encrypting
-import me.onixdev.ircchat.impl.s2.ChatMessageS2packet
-import me.onixdev.ircchat.service.UserAuthService
-import org.java_websocket.WebSocket
-import org.json.JSONObject
-import java.io.File
-import java.nio.file.Files
+import ru.kseonyt.net.context.NetworkContext
 
-class IrcEntity(val connection: WebSocket) {
-    val createtime: Double = System.currentTimeMillis().toDouble()
+class IrcEntity(
+    val ctx: NetworkContext
+) {
     var role: String = "user"
     var userName: String = ""
     var passHash: String = ""
     var uuid: String = ""
-    var file: File? = null
-    var authed: Boolean = false;
+    var authed: Boolean = false
     var lastMessage: String = ""
-    init {
-        connection.send("2a5f:"+ Encrypting.INSTANCE.key)
+
+    fun sendPacket(packet: ru.kseonyt.net.packet.Packet) {
+        ctx.send(packet)
     }
-    fun sendPacket(packet: BasePacket) {
-        connection.send(Encrypting.INSTANCE.encrypt(packet.export()))
+
+    fun sendMessage(message: String, author: String, role: String) {
+     //   sendPacket(ChatBroadcastPacket(author, message, role))
     }
 
     fun init() {
-        val temp = File("user")
-        if (!temp.exists()) {
-            temp.mkdirs()
-            print("p:" + temp.absolutePath)
-        }
-        file = File("user/$userName.json")
-        if (!file!!.exists()) {
-            file!!.createNewFile()
-            val json = JSONObject()
-            json.put("name", userName)
-            json.put("passHash", UserAuthService.getHash(passHash))
-            json.put("uuid", uuid)
-            json.put("role", role)
-            Files.write(file!!.toPath(), json.toString().toByteArray())
-        } else {
-            val json = JSONObject(String(Files.readAllBytes(file!!.toPath())))
-            passHash = json.getString("passHash")
-            uuid = json.getString("uuid")
-            userName = json.getString("name")
-            role = json.getString("role")
-        }
+        // Вся логика с файлами удаляется — теперь база данных в DataBaseService
+        // Но если нужно загрузить данные из БД — делаем это здесь через dataBaseService
     }
 
     fun hasBeforeJoin(): Boolean {
-        return File("user/$userName.json").exists()
+        // Проверка через DataBaseService
+        return false // временно, пока не реализовано
     }
-
-    fun sendMessage(message: String,author: String,role: String) {
-        sendPacket(ChatMessageS2packet("",message,author,role))
-    }
-
 }
