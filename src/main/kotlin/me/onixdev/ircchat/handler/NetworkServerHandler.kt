@@ -25,12 +25,14 @@ class NetworkServerHandler(
 
         val user = dataBaseService.findByUserName(pkt.username)
         if (!user.beforeJoined) {
-            dataBaseService.create(pkt.username, pkt.password)
+            dataBaseService.create(pkt.username, config.hash.hashPassword(pkt.password))
+            entity.userName = user.userName
             entity.role = "user"
             entity.authed = true
             ctx.send(AuthResultPacket(pkt.sender(), 101, "Registered", entity.role, pkt.username))
             logger.info{"User ${pkt.username} registered"}
         } else if (config.hash.verifyPassword(pkt.password, user.passWord)) {
+            entity.userName = user.userName
             entity.role = user.role
             entity.authed = true
             ctx.send(AuthResultPacket(pkt.sender(),100, "Auth Success!", entity.role, pkt.username))

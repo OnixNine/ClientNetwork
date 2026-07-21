@@ -1,5 +1,6 @@
 package me.onixdev.ircchat.command.api
 
+import me.onixdev.ircchat.command.impl.BroadCastCommand
 import me.onixdev.ircchat.command.impl.StopCommand
 import me.onixdev.ircchat.command.impl.UpdateRoleCommand
 
@@ -11,6 +12,7 @@ class CommandManager {
     init {
         register(UpdateRoleCommand())
         register(StopCommand())
+        register(BroadCastCommand())
     }
 
     private fun register(command: Command?) {
