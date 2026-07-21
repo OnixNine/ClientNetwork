@@ -1,10 +1,9 @@
-/*package me.onixdev.ircchat.service.message.validation
+package me.onixdev.ircchat.service.message.validation
 
 import dev.onix.EventHandler
 import dev.onix.EventManager
 import dev.onix.types.Listener
 import dev.onix.types.Priority
-import me.onixdev.ircchat.service.packet.PacketFactory
 import me.onixdev.ircchat.util.events.ClientMessageSendEvent
 import java.nio.charset.StandardCharsets
 
@@ -29,22 +28,22 @@ class MessageValidationPattern : Listener {
         }
 
         if (!ALLOWED_PATTERN.matches(message)) {
-            event.user.connection.send(PacketFactory.disconnectPacket("", "Сообщение содержит запрещенные символы. Используйте только русский, английский язык или цифры."))
+        //    event.user.connection.send(PacketFactory.disconnectPacket("", "Сообщение содержит запрещенные символы. Используйте только русский, английский язык или цифры."))
             event.cancel()
             return
         }
 
         if (message.length > 512) {
-            event.user.connection.send(PacketFactory.disconnectPacket("", "Сообщение слишком длинное."))
+      //      event.user.connection.send(PacketFactory.disconnectPacket("", "Сообщение слишком длинное."))
             event.cancel()
             return
         }
 
         val byteSize = message.toByteArray(StandardCharsets.UTF_8).size
         if (byteSize > MAX_MESSAGE_BYTES) {
-            event.user.connection.send(PacketFactory.disconnectPacket("", "Сообщение превышает лимит размера."))
+           // event.user.connection.send(PacketFactory.disconnectPacket("", "Сообщение превышает лимит размера."))
             event.cancel()
             return
         }
     }
-}*/
+}

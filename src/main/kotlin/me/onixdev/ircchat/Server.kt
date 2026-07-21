@@ -14,6 +14,7 @@ import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.message.BroadCastMessageService
+import me.onixdev.ircchat.service.message.validation.MessageValidationPattern
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import ru.kseonyt.net.Net
@@ -83,7 +84,7 @@ enum class Server {
     }
 
     private fun initListeners() {
-//        MessageValidationPattern()
+        MessageValidationPattern()
 //        MessageLengthLimit()
         BroadCastMessageService()
     }
