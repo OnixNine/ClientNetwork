@@ -1,4 +1,4 @@
-package me.onixdev.ircchat;
+import me.onixdev.ircchat.Server;
 
 public class Main {
 
