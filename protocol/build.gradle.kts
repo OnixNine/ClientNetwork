@@ -12,6 +12,9 @@ repositories {
 
 dependencies {
     implementation(files("nettyLib.jar"))
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.shadowJar {
@@ -19,6 +22,10 @@ tasks.shadowJar {
         exclude("META-INF/**")
         exclude("module-info.class")
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.named("build") {

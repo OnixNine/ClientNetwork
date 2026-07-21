@@ -24,6 +24,11 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.51.2.0")
     implementation("com.github.OnixNine:OnixEvents:c54a0de95a")
     implementation(files("nettyLib.jar"))
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation(kotlin("test"))
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 kotlin {
@@ -49,6 +54,10 @@ tasks.shadowJar {
             "Main-Class" to "me.onixdev.ircchat.Main"
         )
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.named("build") {
