@@ -7,10 +7,7 @@ class IrcEntity(
 ) {
     var role: String = "user"
     var userName: String = ""
-    var passHash: String = ""
-    var uuid: String = ""
     var authed: Boolean = false
-    var lastMessage: String = ""
 
     fun sendPacket(packet: ru.kseonyt.net.packet.Packet) {
         ctx.send(packet)

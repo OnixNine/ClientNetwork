@@ -1,18 +1,19 @@
 package me.onixdev.ircchat
 
+import me.onixdev.ircchat.handler.NetworkServerHandler
 import me.onixdev.ircchat.base.Encrypting
 import me.onixdev.ircchat.command.api.CommandManager
 import me.onixdev.ircchat.console.ConsoleManager
-import me.onixdev.ircchat.handler.LoggingInterceptor
-import me.onixdev.ircchat.handler.NetworkServerHandler
 import me.onixdev.ircchat.impl.c2.codecs.AuthRequestPacketCodec
 import me.onixdev.ircchat.impl.c2.codecs.ClientChatMessagePacketCodec
 import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.impl.s2.codecs.AuthResultPacketCodec
 import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket
+import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
+import me.onixdev.ircchat.service.message.BroadCastMessageService
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import ru.kseonyt.net.Net
@@ -28,6 +29,7 @@ import kotlin.system.exitProcess
 enum class Server {
     INSTANCE;
 
+    var connectionDataManager: ConnectionDataManager? = null
     private var networkServer: NetworkServer? = null
     private var udpEndpoint: UdpEndpoint? = null
     private var port = 0
@@ -40,8 +42,8 @@ enum class Server {
         loadConfig()
         if (config != null) {
             val registry = createPacketRegistry()
-
-            handler = NetworkServerHandler(config!!, dataBaseService)
+            connectionDataManager = ConnectionDataManager()
+            handler = NetworkServerHandler(config!!, dataBaseService,connectionDataManager!!)
             networkServer = Net.server()
                 .port(config!!.port)
                 .codec(registry)
@@ -83,7 +85,7 @@ enum class Server {
     private fun initListeners() {
 //        MessageValidationPattern()
 //        MessageLengthLimit()
-//        BroadCastMessageService()
+        BroadCastMessageService()
     }
 
     private fun loadConfig() {

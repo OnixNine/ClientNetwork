@@ -1,22 +1,25 @@
-/*package me.onixdev.ircchat.manager
+package me.onixdev.ircchat.manager
 
+import ru.kseonyt.net.context.NetworkContext
 import me.onixdev.ircchat.entity.IrcEntity
-import org.java_websocket.WebSocket
+import java.util.concurrent.ConcurrentHashMap
 
 class ConnectionDataManager {
-    private val connections: HashMap<WebSocket, IrcEntity> = HashMap<WebSocket, IrcEntity>()
-    fun addConnection(connection: WebSocket) {
-        connections[connection] = IrcEntity(connection)
+    private val connections = ConcurrentHashMap<NetworkContext, IrcEntity>()
+
+    fun addConnection(ctx: NetworkContext) {
+        connections[ctx] = IrcEntity(ctx)
     }
 
-    fun removeConnection(connection: WebSocket) {
-        connections.remove(connection)
+    fun removeConnection(ctx: NetworkContext) {
+        connections.remove(ctx)
     }
 
-    fun getConnection(connection: WebSocket): IrcEntity? {
-        return connections[connection]
+    fun getConnection(ctx: NetworkContext): IrcEntity? {
+        return connections[ctx]
     }
-    fun getAll(): MutableCollection<IrcEntity> {
+
+    fun getAll(): Collection<IrcEntity> {
         return connections.values
     }
-}*/
+}

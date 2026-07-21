@@ -1,4 +1,4 @@
-/*package me.onixdev.ircchat.service.message
+package me.onixdev.ircchat.service.message
 
 import dev.onix.EventHandler
 import dev.onix.EventManager
@@ -14,9 +14,8 @@ class BroadCastMessageService : Listener {
     @EventHandler(value = Priority.LOWEST)
     fun onMessage(event: ClientMessageSendEvent) {
         if (event.isCancelled) return
-        println("BRD")
-        Server.INSTANCE.connectionDataManager.getAll().forEach { entity->
-            if (entity.authed) entity.sendMessage(event.message,event.author,event.role)
-        }
+        Server.INSTANCE.connectionDataManager!!.getAll()
+            .filter { it.authed }
+            .forEach { it.sendMessage(event.message, event.author, event.role) }
     }
-}*/
+}
