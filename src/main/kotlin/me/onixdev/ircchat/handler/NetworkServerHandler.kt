@@ -31,7 +31,6 @@ class NetworkServerHandler(
 
     @PacketHandler
     fun onAuthRequest(pkt: AuthRequestPacket, ctx: NetworkContext) {
-        println("AuthRequest")
         val entity = IrcEntity(ctx).apply {
             userName = pkt.username
             uuid = ctx.remoteAddress.toString()
@@ -39,8 +38,6 @@ class NetworkServerHandler(
 
         val user = dataBaseService.findByUserName(pkt.username)
         if (!user.beforeJoined) {
-            println("AAAA")
-            // Регистрация
             dataBaseService.create(pkt.username, config.hash.hashPassword(pkt.password))
             entity.role = "user"
             ctx.attr(AUTH_KEY).set(true)
@@ -48,7 +45,6 @@ class NetworkServerHandler(
             ctx.send(AuthResultPacket("",101, "Registered", entity.role, pkt.username))
             logger.info("User ${pkt.username} registered")
         } else if (config.hash.verifyPassword(config.hash.hashPassword(pkt.password), user.passWord)) {
-            // Успешный вход
             entity.role = user.role
             ctx.attr(AUTH_KEY).set(true)
             ctx.attr(USER_KEY).set(entity)
@@ -78,7 +74,6 @@ class NetworkServerHandler(
         EventManager.callEvent(event)
         if (event.isCancelled) return
 
-                // Рассылка всем авторизованным пользователям
                 contexts.forEach {
             val isAuthTarget = it.attr(AUTH_KEY).get() ?: false
             if (isAuthTarget) {
@@ -96,7 +91,6 @@ class NetworkServerHandler(
 //        ctx.disconnect(pkt.reason)
 //    }
 
-    // Обработчик новых соединений
     fun onConnect(ctx: NetworkContext) {
         contexts.add(ctx)
         ctx.attr(TIMEOUT_KEY).set(System.currentTimeMillis())
@@ -104,7 +98,6 @@ class NetworkServerHandler(
         //ctx.send(AuthResultPacket("",101, "Registered", "", "ssse"))
     }
 
-    // Обработчик закрытых соединений
     fun onDisconnect(ctx: NetworkContext) {
         contexts.remove(ctx)
         val entity = ctx.attr(USER_KEY).get()

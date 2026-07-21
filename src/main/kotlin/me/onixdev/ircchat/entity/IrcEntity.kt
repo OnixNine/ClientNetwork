@@ -21,12 +21,5 @@ class IrcEntity(
     }
 
     fun init() {
-        // Вся логика с файлами удаляется — теперь база данных в DataBaseService
-        // Но если нужно загрузить данные из БД — делаем это здесь через dataBaseService
-    }
-
-    fun hasBeforeJoin(): Boolean {
-        // Проверка через DataBaseService
-        return false // временно, пока не реализовано
     }
 }

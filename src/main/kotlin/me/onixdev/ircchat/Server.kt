@@ -16,20 +16,14 @@ import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import ru.kseonyt.net.Net
-import ru.kseonyt.net.context.NetworkContext
 import ru.kseonyt.net.packet.DefaultPacketRegistry
-import ru.kseonyt.net.packet.Packet
-import ru.kseonyt.net.packet.PacketCodec
 import ru.kseonyt.net.packet.PacketRegistry
-import ru.kseonyt.net.pipeline.InterceptorChain
-import ru.kseonyt.net.pipeline.PacketInterceptor
 import ru.kseonyt.net.server.NetworkServer
-import ru.kseonyt.net.udp.ConnectedUdpClient
 import ru.kseonyt.net.udp.UdpEndpoint
 import java.io.File
 import java.nio.file.Files
-import kotlin.system.exitProcess
 import javax.crypto.KeyGenerator
+import kotlin.system.exitProcess
 
 enum class Server {
     INSTANCE;

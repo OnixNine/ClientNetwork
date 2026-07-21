@@ -1,27 +1,21 @@
+package me.onixdev.ircchat.handler
 
-package me.onixdev.ircchat.handler;
+import ru.kseonyt.net.context.NetworkContext
+import ru.kseonyt.net.packet.Packet
+import ru.kseonyt.net.pipeline.InterceptorChain
+import ru.kseonyt.net.pipeline.PacketInterceptor
 
-import ru.kseonyt.net.packet.Packet;
-import ru.kseonyt.net.pipeline.InterceptorChain;
-import ru.kseonyt.net.pipeline.PacketInterceptor;
-import ru.kseonyt.net.context.NetworkContext;
-
-public class LoggingInterceptor implements PacketInterceptor<Packet> {
-
-    @Override
-    public Class<Packet> packetType() {
-        return Packet.class; // Перехватываем все пакеты
+class LoggingInterceptor : PacketInterceptor<Packet?> {
+    override fun packetType(): Class<Packet?> {
+        return Packet::class.java as Class<Packet?>
     }
 
-    @Override
-    public void onRead(Packet pkt, NetworkContext ctx, InterceptorChain chain) {
-        System.out.println("[INTERCEPTOR] Server received packet: " + pkt.getClass().getSimpleName());
-        chain.proceed(); // Обязательно вызываем, чтобы пакет пошёл дальше
+    override fun onRead(pkt: Packet, ctx: NetworkContext, chain: InterceptorChain) {
+        println("[INTERCEPTOR] Server received packet: " + pkt.javaClass.getSimpleName())
+        chain.proceed()
     }
 
-    @Override
-    public void onWrite(Packet pkt, NetworkContext ctx, InterceptorChain chain) {
-        // Для отладки записи пока ничего не выводим, но тоже пропускаем
-        chain.proceed();
+    override fun onWrite(pkt: Packet, ctx: NetworkContext, chain: InterceptorChain) {
+        chain.proceed()
     }
 }
