@@ -1,5 +1,7 @@
 package me.onixdev.ircchat.entity
 
+import me.onixdev.ircchat.base.entity.UserEntry
+import me.onixdev.ircchat.impl.s2.impl.ChatBroadcastPacket
 import ru.kseonyt.net.context.NetworkContext
 
 class IrcEntity(
@@ -13,10 +15,12 @@ class IrcEntity(
         ctx.send(packet)
     }
 
-    fun sendMessage(message: String, author: String, role: String) {
-     //   sendPacket(ChatBroadcastPacket(author, message, role))
+    fun sendMessage(author: UserEntry,message: String) {
+        sendPacket(ChatBroadcastPacket(author, message))
     }
-
+    fun toUserEntry() : UserEntry {
+        return UserEntry(userName,role)
+    }
     fun init() {
     }
 }
