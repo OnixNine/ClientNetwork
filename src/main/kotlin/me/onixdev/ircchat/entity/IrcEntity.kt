@@ -10,17 +10,17 @@ class IrcEntity(
     var role: String = "user"
     var userName: String = ""
     var authed: Boolean = false
+    var lastMessageTime: Long = 0
 
     fun sendPacket(packet: ru.kseonyt.net.packet.Packet) {
         ctx.send(packet)
     }
 
-    fun sendMessage(author: UserEntry,message: String) {
+    fun sendMessage(author: UserEntry, message: String) {
         sendPacket(ChatBroadcastPacket(author, message))
     }
-    fun toUserEntry() : UserEntry {
-        return UserEntry(userName,role)
-    }
-    fun init() {
+
+    fun toUserEntry(): UserEntry {
+        return UserEntry(userName, role)
     }
 }

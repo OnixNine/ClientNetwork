@@ -11,12 +11,16 @@ import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.impl.s2.codecs.AuthResultPacketCodec
 import me.onixdev.ircchat.impl.s2.codecs.ChatBroadCastPacketCodec
+import me.onixdev.ircchat.impl.s2.codecs.KeyExchangePacketCodec
 import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket
 import me.onixdev.ircchat.impl.s2.impl.ChatBroadcastPacket
+import me.onixdev.ircchat.impl.s2.impl.KeyExchangePacket
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.message.BroadCastMessageService
+import me.onixdev.ircchat.service.message.validation.MessageLengthLimit
+import me.onixdev.ircchat.service.message.validation.MessageSpamDelay
 import me.onixdev.ircchat.service.message.validation.MessageValidationPattern
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
@@ -41,9 +45,13 @@ enum class Server {
     private var config: BaseConfig? = null
     private val dataBaseService = DataBaseService()
     val commandManager = CommandManager()
+    private lateinit var aesKey: SecretKey
+
+    fun getAesKey(): SecretKey = aesKey
 
     fun start() {
         loadConfig()
+        aesKey = loadOrCreateKey()
         if (config != null) {
             val registry = createPacketRegistry()
             connectionDataManager = ConnectionDataManager()
@@ -55,7 +63,7 @@ enum class Server {
                 .port(config!!.port)
                 .codec(registry)
                 .compress(256)
-                .encrypt(loadOrCreateKey())
+                .encrypt(aesKey)
                 .interceptor(LoggingInterceptor())
                 .listener(authHandler)
                 .listener(chatHandler)
@@ -91,6 +99,7 @@ enum class Server {
         )
         registry.register(101, AuthResultPacket::class.java, AuthResultPacketCodec())
         registry.register(102, ChatBroadcastPacket::class.java, ChatBroadCastPacketCodec())
+        registry.register(103, KeyExchangePacket::class.java, KeyExchangePacketCodec())
         return registry
     }
 
@@ -127,7 +136,8 @@ enum class Server {
 
     private fun initListeners() {
         MessageValidationPattern()
-//        MessageLengthLimit()
+        MessageLengthLimit()
+        MessageSpamDelay()
         BroadCastMessageService()
     }
 
