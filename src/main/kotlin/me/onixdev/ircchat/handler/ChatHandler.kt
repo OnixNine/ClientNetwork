@@ -4,9 +4,11 @@ import dev.onix.EventManager
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.util.events.ClientMessageSendEvent
+import ru.kseonyt.net.annotation.NetworkListener
 import ru.kseonyt.net.annotation.PacketHandler
 import ru.kseonyt.net.context.NetworkContext
 
+@NetworkListener
 class ChatHandler(
     private val connectionDataManager: ConnectionDataManager
 ) {

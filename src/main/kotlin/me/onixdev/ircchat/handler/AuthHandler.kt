@@ -6,9 +6,11 @@ import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.Hash
 import me.onixdev.ircchat.service.database.DataBaseService
+import ru.kseonyt.net.annotation.NetworkListener
 import ru.kseonyt.net.annotation.PacketHandler
 import ru.kseonyt.net.context.NetworkContext
 
+@NetworkListener
 class AuthHandler(
     private val hash: Hash,
     private val dataBaseService: DataBaseService,
