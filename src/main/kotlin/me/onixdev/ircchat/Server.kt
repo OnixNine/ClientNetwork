@@ -1,10 +1,10 @@
 package me.onixdev.ircchat
 
-import me.onixdev.ircchat.base.Encrypting
 import me.onixdev.ircchat.command.api.CommandManager
 import me.onixdev.ircchat.console.ConsoleManager
+import me.onixdev.ircchat.handler.AuthHandler
+import me.onixdev.ircchat.handler.ChatHandler
 import me.onixdev.ircchat.handler.LoggingInterceptor
-import me.onixdev.ircchat.handler.NetworkServerHandler
 import me.onixdev.ircchat.impl.c2.codecs.AuthRequestPacketCodec
 import me.onixdev.ircchat.impl.c2.codecs.ClientChatMessagePacketCodec
 import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket
@@ -24,10 +24,12 @@ import ru.kseonyt.net.Net
 import ru.kseonyt.net.packet.DefaultPacketRegistry
 import ru.kseonyt.net.packet.PacketRegistry
 import ru.kseonyt.net.server.NetworkServer
-import ru.kseonyt.net.udp.UdpEndpoint
 import java.io.File
 import java.nio.file.Files
+import java.util.Base64
 import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
 import kotlin.system.exitProcess
 
 enum class Server {
@@ -35,11 +37,9 @@ enum class Server {
 
     var connectionDataManager: ConnectionDataManager? = null
     private var networkServer: NetworkServer? = null
-    private var udpEndpoint: UdpEndpoint? = null
     private var port = 0
     private var config: BaseConfig? = null
     private val dataBaseService = DataBaseService()
-    lateinit var  handler:NetworkServerHandler
     val commandManager = CommandManager()
 
     fun start() {
@@ -47,17 +47,28 @@ enum class Server {
         if (config != null) {
             val registry = createPacketRegistry()
             connectionDataManager = ConnectionDataManager()
-            handler = NetworkServerHandler(config!!, dataBaseService,connectionDataManager!!)
+
+            val authHandler = AuthHandler(config!!.hash, dataBaseService, connectionDataManager!!)
+            val chatHandler = ChatHandler(connectionDataManager!!)
+
             networkServer = Net.server()
                 .port(config!!.port)
                 .codec(registry)
                 .compress(256)
-                //.encrypt(generateKey())
-               .interceptor(LoggingInterceptor())
-                .listener(handler)
+                .encrypt(loadOrCreateKey())
+                .interceptor(LoggingInterceptor())
+                .listener(authHandler)
+                .listener(chatHandler)
                 .start()
-            networkServer!!.onConnect { ctx -> handler.onConnect(ctx) }
-                .onDisconnect { ctx -> handler.onDisconnect(ctx) }
+
+            networkServer!!.onConnect { ctx ->
+                connectionDataManager!!.addConnection(ctx)
+                println("New connection from ${ctx.remoteAddress}")
+            }
+            networkServer!!.onDisconnect { ctx ->
+                connectionDataManager!!.removeConnection(ctx)
+                println("Connection closed from ${ctx.remoteAddress}")
+            }
 
             println("Server started on port ${config?.port}")
             initListeners()
@@ -67,6 +78,8 @@ enum class Server {
             exitProcess(1)
         }
     }
+
+    fun getNetworkServer(): NetworkServer? = networkServer
 
     private fun createPacketRegistry(): PacketRegistry {
         val registry = DefaultPacketRegistry()
@@ -81,10 +94,35 @@ enum class Server {
         return registry
     }
 
-    private fun generateKey(): javax.crypto.SecretKey {
+    private fun loadOrCreateKey(): SecretKey {
+        val configFile = File("config.json")
+        if (!configFile.exists()) return generateAndSaveKey()
+
+        val json = JSONObject(String(Files.readAllBytes(configFile.toPath())))
+        val keyBase64 = json.optString("aes_key", "")
+        if (keyBase64.isNotEmpty()) {
+            val keyBytes = Base64.getDecoder().decode(keyBase64)
+            return SecretKeySpec(keyBytes, "AES")
+        }
+        return generateAndSaveKey()
+    }
+
+    private fun generateAndSaveKey(): SecretKey {
         val keyGen = KeyGenerator.getInstance("AES")
         keyGen.init(128)
-        return keyGen.generateKey()
+        val key = keyGen.generateKey()
+
+        val configFile = File("config.json")
+        val json = if (configFile.exists()) {
+            JSONObject(String(Files.readAllBytes(configFile.toPath())))
+        } else {
+            JSONObject()
+        }
+        json.put("aes_key", Base64.getEncoder().encodeToString(key.encoded))
+        Files.write(configFile.toPath(), json.toString().toByteArray())
+
+        println("AES-128-GCM key generated and saved to config.json")
+        return key
     }
 
     private fun initListeners() {
@@ -104,8 +142,6 @@ enum class Server {
             val jsonObject = JSONObject(json)
             port = jsonObject.getInt("port")
             val timeout = jsonObject.getInt("timeout")
-            val key = jsonObject.optString("key", "41dd854w8s")
-            Encrypting.INSTANCE.key = key
             config = BaseConfig(port, timeout, HashFactory.create(jsonObject.optString("hash", "Sha256")))
         } catch (e: Exception) {
             throw RuntimeException(e)
@@ -118,7 +154,6 @@ enum class Server {
         config.put("port", port.takeIf { it != 0 } ?: 4847)
         config.put("timeout", 20000)
         config.put("hash", "Sha256")
-        config.put("key", "41dd854w8s")
         Files.write(file.toPath(), config.toString().toByteArray())
     }
 
@@ -126,7 +161,6 @@ enum class Server {
 
     fun stop() {
         networkServer?.shutdown()
-        udpEndpoint?.shutdown()
         println("Server stopped")
         exitProcess(0)
     }
