@@ -1,63 +1,112 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat
 
-import me.onixdev.ircchat.base.Encrypting
 import me.onixdev.ircchat.command.api.CommandManager
 import me.onixdev.ircchat.console.ConsoleManager
+import me.onixdev.ircchat.handler.AuthHandler
+import me.onixdev.ircchat.handler.ChatHandler
+import me.onixdev.ircchat.handler.KeepAliveHandler
 import me.onixdev.ircchat.handler.LoggingInterceptor
-import me.onixdev.ircchat.handler.NetworkServerHandler
 import me.onixdev.ircchat.impl.c2.codecs.AuthRequestPacketCodec
 import me.onixdev.ircchat.impl.c2.codecs.ClientChatMessagePacketCodec
 import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.impl.s2.codecs.AuthResultPacketCodec
 import me.onixdev.ircchat.impl.s2.codecs.ChatBroadCastPacketCodec
+import me.onixdev.ircchat.impl.s2.codecs.KeepAlivePacketCodec
+import me.onixdev.ircchat.impl.s2.codecs.KeyExchangePacketCodec
+import me.onixdev.ircchat.impl.s2.codecs.SystemMessagePacketCodec
 import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket
 import me.onixdev.ircchat.impl.s2.impl.ChatBroadcastPacket
+import me.onixdev.ircchat.impl.s2.impl.KeepAlivePacket
+import me.onixdev.ircchat.impl.s2.impl.KeyExchangePacket
+import me.onixdev.ircchat.impl.s2.impl.SystemMessagePacket
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.message.BroadCastMessageService
+import me.onixdev.ircchat.service.message.validation.MessageLengthLimit
+import me.onixdev.ircchat.service.message.validation.MessageSpamDelay
 import me.onixdev.ircchat.service.message.validation.MessageValidationPattern
+import me.onixdev.ircchat.service.moderation.PunishmentService
+import me.onixdev.ircchat.service.session.SessionManager
+import me.onixdev.ircchat.service.task.GlobalScheduler
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import ru.kseonyt.net.Net
 import ru.kseonyt.net.packet.DefaultPacketRegistry
 import ru.kseonyt.net.packet.PacketRegistry
 import ru.kseonyt.net.server.NetworkServer
-import ru.kseonyt.net.udp.UdpEndpoint
 import java.io.File
 import java.nio.file.Files
+import java.util.Base64
 import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
 enum class Server {
     INSTANCE;
 
     var connectionDataManager: ConnectionDataManager? = null
+    var punishmentService: PunishmentService? = null
+        private set
     private var networkServer: NetworkServer? = null
-    private var udpEndpoint: UdpEndpoint? = null
     private var port = 0
     private var config: BaseConfig? = null
     private val dataBaseService = DataBaseService()
-    lateinit var  handler:NetworkServerHandler
     val commandManager = CommandManager()
+    private lateinit var aesKey: SecretKey
+
+    fun getAesKey(): SecretKey = aesKey
 
     fun start() {
         loadConfig()
+        aesKey = loadOrCreateKey()
         if (config != null) {
             val registry = createPacketRegistry()
             connectionDataManager = ConnectionDataManager()
-            handler = NetworkServerHandler(config!!, dataBaseService,connectionDataManager!!)
+
+            val sessionManager = SessionManager(connectionDataManager!!)
+            val punishmentService = PunishmentService(dataBaseService, connectionDataManager!!)
+            this.punishmentService = punishmentService
+            val authHandler = AuthHandler(
+                config!!.hash,
+                dataBaseService,
+                connectionDataManager!!,
+                punishmentService,
+                onAuthenticated = sessionManager::onAuthenticated
+            )
+            val chatHandler = ChatHandler(connectionDataManager!!, punishmentService)
+            val keepAliveHandler = KeepAliveHandler(sessionManager)
+
             networkServer = Net.server()
                 .port(config!!.port)
                 .codec(registry)
                 .compress(256)
-                //.encrypt(generateKey())
-               .interceptor(LoggingInterceptor())
-                .listener(handler)
+                .encrypt(aesKey)
+                .interceptor(LoggingInterceptor())
+                .listener(authHandler)
+                .listener(chatHandler)
+                .listener(keepAliveHandler)
                 .start()
-            networkServer!!.onConnect { ctx -> handler.onConnect(ctx) }
-                .onDisconnect { ctx -> handler.onDisconnect(ctx) }
+
+            networkServer!!.onConnect { ctx ->
+                connectionDataManager!!.addConnection(ctx)
+                sessionManager.onConnected(ctx)
+                println("New connection from ${ctx.remoteAddress}")
+            }
+            networkServer!!.onDisconnect { ctx ->
+                sessionManager.onDisconnected(ctx)
+                connectionDataManager!!.removeConnection(ctx)
+                println("Connection closed from ${ctx.remoteAddress}")
+            }
+
+            GlobalScheduler.runTaskTimer("session-tick", 1.seconds, 1.seconds) {
+                sessionManager.tick()
+            }
 
             println("Server started on port ${config?.port}")
             initListeners()
@@ -67,6 +116,8 @@ enum class Server {
             exitProcess(1)
         }
     }
+
+    fun getNetworkServer(): NetworkServer? = networkServer
 
     private fun createPacketRegistry(): PacketRegistry {
         val registry = DefaultPacketRegistry()
@@ -78,18 +129,47 @@ enum class Server {
         )
         registry.register(101, AuthResultPacket::class.java, AuthResultPacketCodec())
         registry.register(102, ChatBroadcastPacket::class.java, ChatBroadCastPacketCodec())
+        registry.register(103, KeyExchangePacket::class.java, KeyExchangePacketCodec())
+        registry.register(104, SystemMessagePacket::class.java, SystemMessagePacketCodec())
+        registry.register(105, KeepAlivePacket::class.java, KeepAlivePacketCodec())
         return registry
     }
 
-    private fun generateKey(): javax.crypto.SecretKey {
+    private fun loadOrCreateKey(): SecretKey {
+        val configFile = File("config.json")
+        if (!configFile.exists()) return generateAndSaveKey()
+
+        val json = JSONObject(String(Files.readAllBytes(configFile.toPath())))
+        val keyBase64 = json.optString("aes_key", "")
+        if (keyBase64.isNotEmpty()) {
+            val keyBytes = Base64.getDecoder().decode(keyBase64)
+            return SecretKeySpec(keyBytes, "AES")
+        }
+        return generateAndSaveKey()
+    }
+
+    private fun generateAndSaveKey(): SecretKey {
         val keyGen = KeyGenerator.getInstance("AES")
         keyGen.init(128)
-        return keyGen.generateKey()
+        val key = keyGen.generateKey()
+
+        val configFile = File("config.json")
+        val json = if (configFile.exists()) {
+            JSONObject(String(Files.readAllBytes(configFile.toPath())))
+        } else {
+            JSONObject()
+        }
+        json.put("aes_key", Base64.getEncoder().encodeToString(key.encoded))
+        Files.write(configFile.toPath(), json.toString().toByteArray())
+
+        println("AES-128-GCM key generated and saved to config.json")
+        return key
     }
 
     private fun initListeners() {
         MessageValidationPattern()
-//        MessageLengthLimit()
+        MessageLengthLimit()
+        MessageSpamDelay()
         BroadCastMessageService()
     }
 
@@ -97,15 +177,12 @@ enum class Server {
         val file = File("config.json")
         if (!file.exists()) {
             saveConfig()
-            return
         }
         try {
             val json = String(Files.readAllBytes(file.toPath()))
             val jsonObject = JSONObject(json)
             port = jsonObject.getInt("port")
             val timeout = jsonObject.getInt("timeout")
-            val key = jsonObject.optString("key", "41dd854w8s")
-            Encrypting.INSTANCE.key = key
             config = BaseConfig(port, timeout, HashFactory.create(jsonObject.optString("hash", "Sha256")))
         } catch (e: Exception) {
             throw RuntimeException(e)
@@ -118,15 +195,14 @@ enum class Server {
         config.put("port", port.takeIf { it != 0 } ?: 4847)
         config.put("timeout", 20000)
         config.put("hash", "Sha256")
-        config.put("key", "41dd854w8s")
         Files.write(file.toPath(), config.toString().toByteArray())
     }
 
     fun getDataBase(): DataBaseService = dataBaseService
 
     fun stop() {
+        GlobalScheduler.cancelTask("session-tick")
         networkServer?.shutdown()
-        udpEndpoint?.shutdown()
         println("Server stopped")
         exitProcess(0)
     }

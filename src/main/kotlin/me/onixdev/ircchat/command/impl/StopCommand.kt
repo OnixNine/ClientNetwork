@@ -1,10 +1,14 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.command.impl
 
 import me.onixdev.ircchat.Server
 import me.onixdev.ircchat.command.api.Command
+import me.onixdev.ircchat.command.api.CommandSender
 
-class StopCommand : Command("stop","stop Server","stop") {
-    override fun execute(args: Array<String?>) {
+class StopCommand : Command("stop", "Shut the server down", "/stop") {
+    override fun execute(sender: CommandSender, args: List<String>) {
+        sender.sendMessage("Stopping server...")
         Server.INSTANCE.stop()
     }
 }

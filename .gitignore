@@ -41,6 +41,8 @@ user
 gradle
 build
 config.json
+/fabric/run/*
+/fabric/run
 ### VS Code ###
 .vscode/
 

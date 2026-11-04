@@ -1,94 +1,141 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.command.api
 
-import io.mockk.*
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class CommandManagerTest {
 
-    private lateinit var manager: CommandManager
-
-    @BeforeEach
-    fun setUp() {
-        manager = CommandManager()
-        manager.commands.clear()
-    }
-
-    @Test
-    fun `commands list has defaults before clear`() {
-        val m = CommandManager()
-        assertTrue(m.commands.isNotEmpty())
-    }
-
-    @Test
-    fun `handleCommand dispatches to matching command`() {
-        val testCommand = mockk<Command>(relaxed = true) {
-            every { name } returns "test"
-        }
-        manager.commands.add(testCommand)
-
-        manager.handleCommand("test arg1 arg2")
-
-        verify { testCommand.execute(match { it.size == 2 && it[0] == "arg1" && it[1] == "arg2" }) }
-    }
-
-    @Test
-    fun `handleCommand does nothing for unknown command`() {
-        val testCommand = mockk<Command>(relaxed = true) {
-            every { name } returns "known"
-        }
-        manager.commands.add(testCommand)
-
-        manager.handleCommand("unknown args")
-
-        verify(exactly = 0) { testCommand.execute(any()) }
-    }
-
-    @Test
-    fun `handleCommand with no args`() {
-        val testCommand = mockk<Command>(relaxed = true) {
-            every { name } returns "cmd"
-        }
-        manager.commands.add(testCommand)
-
-        manager.handleCommand("cmd")
-
-        verify { testCommand.execute(match { it.isEmpty() }) }
-    }
-
-    @Test
-    fun `handleCommand parses args correctly`() {
-        val testCommand = mockk<Command>(relaxed = true) {
-            every { name } returns "mycmd"
-        }
-        manager.commands.add(testCommand)
-
-        manager.handleCommand("mycmd set admin user123")
-
-        verify {
-            testCommand.execute(match {
-                it.size == 3 && it[0] == "set" && it[1] == "admin" && it[2] == "user123"
-            })
+    private class RecordingSender : CommandSender {
+        override val name: String = "test"
+        val messages = mutableListOf<String>()
+        override fun sendMessage(message: String) {
+            messages.add(message)
         }
     }
 
+    private class FakeCommand(
+        name: String,
+        aliases: List<String> = emptyList()
+    ) : Command(name, "fake command", "/$name", aliases) {
+        val calls = mutableListOf<List<String>>()
+        override fun execute(sender: CommandSender, args: List<String>) {
+            calls.add(args)
+        }
+    }
+
+    private fun isolated(vararg commands: Command): CommandManager {
+        val manager = CommandManager()
+        manager.commands.toList().forEach { manager.unregister(it.name) }
+        commands.forEach { manager.register(it) }
+        return manager
+    }
+
     @Test
-    fun `prefix can be changed`() {
-        assertEquals(".", manager.prefix)
+    fun `defaults are registered`() {
+        val names = CommandManager().commands.map { it.name.lowercase() }
+        assertTrue(
+            names.containsAll(
+                listOf(
+                    "kick", "ban", "unban", "mute", "unmute",
+                    "role", "history", "plist", "broadcast", "stop"
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `dispatch passes parsed args to the command`() {
+        val command = FakeCommand("test")
+        val manager = isolated(command)
+
+        manager.dispatch(RecordingSender(), "test arg1 arg2")
+
+        assertEquals(listOf("arg1", "arg2"), command.calls.single())
+    }
+
+    @Test
+    fun `dispatch with no args passes an empty list`() {
+        val command = FakeCommand("cmd")
+        val manager = isolated(command)
+
+        manager.dispatch(RecordingSender(), "cmd")
+
+        assertTrue(command.calls.single().isEmpty())
+    }
+
+    @Test
+    fun `dispatch is case insensitive on the label`() {
+        val command = FakeCommand("mycmd")
+        val manager = isolated(command)
+
+        assertTrue(manager.dispatch(RecordingSender(), "MYCMD"))
+        assertEquals(1, command.calls.size)
+    }
+
+    @Test
+    fun `dispatch resolves aliases`() {
+        val command = FakeCommand("broadcast", aliases = listOf("bc"))
+        val manager = isolated(command)
+
+        assertTrue(manager.dispatch(RecordingSender(), "bc hello world"))
+        assertEquals(listOf("hello", "world"), command.calls.single())
+    }
+
+    @Test
+    fun `unknown command reports and returns false`() {
+        val manager = isolated(FakeCommand("known"))
+        val sender = RecordingSender()
+
+        assertFalse(manager.dispatch(sender, "unknown args"))
+        assertTrue(sender.messages.any { it.contains("Unknown command") })
+    }
+
+    @Test
+    fun `command exception is caught and reported`() {
+        val command = object : Command("boom") {
+            override fun execute(sender: CommandSender, args: List<String>) {
+                throw IllegalStateException("kaboom")
+            }
+        }
+        val manager = isolated(command)
+        val sender = RecordingSender()
+
+        assertFalse(manager.dispatch(sender, "boom"))
+        assertTrue(sender.messages.any { it.contains("kaboom") })
+    }
+
+    @Test
+    fun `prefix is stripped when present`() {
+        val command = FakeCommand("ping")
+        val manager = isolated(command)
         manager.prefix = "!"
-        assertEquals("!", manager.prefix)
+
+        assertTrue(manager.dispatch(RecordingSender(), "!ping"))
+        assertEquals(1, command.calls.size)
     }
 
     @Test
-    fun `handleCommand is case sensitive`() {
-        val testCommand = mockk<Command>(relaxed = true) {
-            every { name } returns "mycmd"
+    fun `register rejects duplicate names`() {
+        val manager = isolated(FakeCommand("dup"))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            manager.register(FakeCommand("dup"))
         }
-        manager.commands.add(testCommand)
+    }
 
-        manager.handleCommand("MYCMD")
+    @Test
+    fun `unregister removes the command and its aliases`() {
+        val command = FakeCommand("bc", aliases = listOf("broadcast"))
+        val manager = isolated(command)
+        manager.unregister("bc")
+        val sender = RecordingSender()
 
-        verify(exactly = 0) { testCommand.execute(any()) }
+        assertFalse(manager.dispatch(sender, "broadcast hi"))
+        assertTrue(sender.messages.any { it.contains("Unknown command") })
     }
 }

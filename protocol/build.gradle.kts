@@ -22,6 +22,12 @@ tasks.shadowJar {
         exclude("META-INF/**")
         exclude("module-info.class")
     }
+    // nettyLib.jar bundles its own SLF4J (api + simple provider). Whoever uses
+    // this jar already has SLF4J on the classpath (the server and, for the
+    // Fabric test mod, Minecraft itself), and a second provider makes SLF4J
+    // recurse and crash. Drop it from the fat jar.
+    exclude("org/slf4j/**")
+    exclude("META-INF/services/org.slf4j.spi.SLF4JServiceProvider")
 }
 
 tasks.test {

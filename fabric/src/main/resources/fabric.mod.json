@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "ircchat-test",
+  "version": "1.0.0",
+  "name": "IRC Chat Protocol Test",
+  "description": "Client-side test harness for the IRC chat network protocol.",
+  "authors": [
+    "OnixNine"
+  ],
+  "license": "GPL-3.0-or-later",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.onixdev.ircchat.test.IrcTestMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "fabric-api": "*",
+    "minecraft": "~1.20.5",
+    "java": ">=21"
+  }
+}

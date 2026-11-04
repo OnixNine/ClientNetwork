@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.handler
 
 import ru.kseonyt.net.context.NetworkContext
@@ -16,6 +18,7 @@ class LoggingInterceptor : PacketInterceptor<Packet?> {
     }
 
     override fun onWrite(pkt: Packet, ctx: NetworkContext, chain: InterceptorChain) {
+        println("[INTERCEPTOR] Server sended packet: " + pkt.javaClass.getSimpleName())
         chain.proceed()
     }
 }

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.manager
 
 import ru.kseonyt.net.context.NetworkContext
@@ -18,6 +20,14 @@ class ConnectionDataManager {
     fun getConnection(ctx: NetworkContext): IrcEntity? {
         return connections[ctx]
     }
+
+    fun findAuthenticatedByUsername(username: String): IrcEntity? {
+        return connections.values.firstOrNull {
+            it.authed && it.userName.equals(username, ignoreCase = true)
+        }
+    }
+
+    fun isOnline(username: String): Boolean = findAuthenticatedByUsername(username) != null
 
     fun getAll(): Collection<IrcEntity> {
         return connections.values

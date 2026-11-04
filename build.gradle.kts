@@ -20,7 +20,7 @@ dependencies {
     implementation("dev.whyoleg.cryptography:cryptography-provider-optimal:0.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("org.slf4j:slf4j-simple:2.0.3")
-    implementation("com.github.groundbreakingmc:MyLib:e2865d2")
+    implementation("com.github.groundbreakingmc:MyLib:7d2ccd9")
     implementation("org.xerial:sqlite-jdbc:3.51.2.0")
     implementation("com.github.OnixNine:OnixEvents:c54a0de95a")
     implementation(files("nettyLib.jar"))
@@ -51,7 +51,7 @@ tasks.shadowJar {
     }
     manifest {
         attributes(
-            "Main-Class" to "me.onixdev.ircchat.Main"
+            "Main-Class" to "Main"
         )
     }
 }

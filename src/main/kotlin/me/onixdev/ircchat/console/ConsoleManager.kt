@@ -1,20 +1,26 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.console
 
 import me.onixdev.ircchat.Server
-import java.util.*
+import java.util.Scanner
 
 object ConsoleManager {
-    @Suppress("all")
     fun init() {
-        for (i in 0..999) {
-            var scanner = Scanner(System.`in`)
-            val string = scanner.nextLine()
+        val thread = Thread(::runLoop, "irc-console")
+        thread.isDaemon = true
+        thread.start()
+    }
+
+    private fun runLoop() {
+        val scanner = Scanner(System.`in`)
+        while (!Thread.currentThread().isInterrupted && scanner.hasNextLine()) {
+            val line = scanner.nextLine().trim()
+            if (line.isEmpty()) continue
             try {
-                Server.INSTANCE.commandManager.handleCommand(string)
+                Server.INSTANCE.commandManager.handleCommand(line)
             } catch (e: Exception) {
-                println("Error while handling: " + string + " " + e.message)
-                e.printStackTrace()
-                scanner = Scanner(System.`in`)
+                println("Error while handling '$line': ${e.message}")
             }
         }
     }

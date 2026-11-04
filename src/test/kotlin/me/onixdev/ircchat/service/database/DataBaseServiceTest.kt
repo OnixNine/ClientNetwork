@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.service.database
 
 import org.junit.jupiter.api.*
@@ -8,18 +10,17 @@ import java.io.File
 class DataBaseServiceTest {
 
     private lateinit var service: DataBaseService
-    private val dbFile = File("test_app.db")
+    private val dbFile = File("test_users.db")
 
     @BeforeAll
     fun setUp() {
         if (dbFile.exists()) dbFile.delete()
-        service = DataBaseService()
+        service = DataBaseService(dbFile.name)
     }
 
     @AfterAll
     fun tearDown() {
         dbFile.delete()
-        File("app.db").delete()
     }
 
     @AfterEach

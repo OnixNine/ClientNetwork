@@ -1,6 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.impl.c2.codecs;
 
-import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket;
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket;
 import ru.kseonyt.net.packet.PacketBuffer;
 import ru.kseonyt.net.packet.PacketCodec;
@@ -9,8 +10,8 @@ public class ClientChatMessagePacketCodec implements PacketCodec<ClientChatMessa
     @Override
     public void encode(ClientChatMessagePacket pkt, PacketBuffer buf) {
         buf.writeString(pkt.sender());
-        buf.writeString(pkt.author());
         buf.writeString(pkt.message());
+        buf.writeString(pkt.author());
     }
 
     @Override

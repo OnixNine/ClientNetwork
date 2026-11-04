@@ -1,13 +1,15 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.service.database
 
-import com.github.groundbreakingmc.mylib.database.Database
-import com.github.groundbreakingmc.mylib.database.InsertQuery
+import com.github.groundbreakingmc.mylib.database.sql.Database
+import com.github.groundbreakingmc.mylib.database.sql.InsertQuery
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.sql.SQLException
 import kotlin.system.exitProcess
 
 
-class DataBaseService {
+class DataBaseService(private val dbFileName: String = "app.db") {
     lateinit var db: Database
     lateinit var createUser: InsertQuery
     val logger = KotlinLogging.logger("DataBaseLogger")
@@ -23,10 +25,22 @@ class DataBaseService {
         } catch (e: ClassNotFoundException) {
             throw RuntimeException(e)
         }
-        db = Database.sqlite("app.db")
+        db = Database.sqlite(dbFileName)
         try {
             db.connection()
             db.createTables("CREATE TABLE IF NOT EXISTS users(" + "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " + "username VARCHAR(255) NOT NULL, " + "password VARCHAR(255) NOT NULL, " + "role VARCHAR(255) NOT NULL, " + "joined INTEGER NOT NULL, "+"banned INTEGER NOT NULL)")
+            db.createTables(
+                "CREATE TABLE IF NOT EXISTS punishments(" +
+                    "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, " +
+                    "type VARCHAR(16) NOT NULL, " +
+                    "username VARCHAR(255) NOT NULL, " +
+                    "reason VARCHAR(255) NOT NULL, " +
+                    "author VARCHAR(255) NOT NULL, " +
+                    "issued_at INTEGER NOT NULL, " +
+                    "expires_at INTEGER, " +
+                    "revoked INTEGER NOT NULL DEFAULT 0)"
+            )
+            db.executeUpdate("CREATE INDEX IF NOT EXISTS idx_punishments_user ON punishments(username, type, revoked)")
 
             this.createUser = db.insert("users")
                 .value("username", "")
