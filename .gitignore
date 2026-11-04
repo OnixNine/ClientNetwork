@@ -51,3 +51,8 @@ config.json
 /app.db
 /logs/*
 
+
+# local push credentials / helpers
+.env
+.git-askpass.sh
+push.sh
