@@ -1,7 +1,7 @@
 package me.onixdev.ircchat.service.database
 
-import com.github.groundbreakingmc.mylib.database.Database
-import com.github.groundbreakingmc.mylib.database.InsertQuery
+import com.github.groundbreakingmc.mylib.database.sql.Database
+import com.github.groundbreakingmc.mylib.database.sql.InsertQuery
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.sql.SQLException
 import kotlin.system.exitProcess
