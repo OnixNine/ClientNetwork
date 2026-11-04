@@ -1,41 +1,89 @@
 package me.onixdev.ircchat.command.api
 
+import me.onixdev.ircchat.command.impl.BanCommand
 import me.onixdev.ircchat.command.impl.BroadCastCommand
+import me.onixdev.ircchat.command.impl.KickCommand
+import me.onixdev.ircchat.command.impl.RoleCommand
 import me.onixdev.ircchat.command.impl.StopCommand
-import me.onixdev.ircchat.command.impl.UpdateRoleCommand
+import me.onixdev.ircchat.command.impl.UnbanCommand
 
-
+/**
+ * Registry and dispatcher for console commands.
+ *
+ * The [prefix] is optional: console input normally has none, but a prefix is
+ * useful if the same manager is ever fed network chat lines.
+ */
 class CommandManager {
-    val commands: MutableList<Command> = ArrayList<Command>()
-    var prefix: String? = "."
+
+    private val registered = LinkedHashMap<String, Command>()
+    private val labels = HashMap<String, Command>()
+
+    var prefix: String = ""
 
     init {
-        register(UpdateRoleCommand())
-        register(StopCommand())
+        register(RoleCommand())
+        register(KickCommand())
+        register(BanCommand())
+        register(UnbanCommand())
         register(BroadCastCommand())
+        register(StopCommand())
     }
 
-    private fun register(command: Command?) {
-        commands.add(command!!)
+    val commands: Collection<Command>
+        get() = registered.values
+
+    fun register(command: Command) {
+        val key = command.name.lowercase()
+        require(!registered.containsKey(key)) { "Command '${command.name}' is already registered" }
+        registered[key] = command
+        (listOf(command.name) + command.aliases).forEach { labels[it.lowercase()] = command }
     }
 
-    fun handleCommand(input: String) {
-        val split: Array<String?> = input.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        if (split.isEmpty()) return
+    fun unregister(name: String) {
+        val command = registered.remove(name.lowercase()) ?: return
+        labels.entries.removeIf { it.value === command }
+    }
 
-        val commandName = split[0]
-        val args = arrayOfNulls<String>(split.size - 1)
-        System.arraycopy(split, 1, args, 0, args.size)
+    /** Console entry point. */
+    fun handleCommand(input: String) = dispatch(ConsoleSender, input)
 
-        for (cmd in commands) {
-            if (cmd.name.equals(commandName)) {
-                try {
-                    cmd.execute(args)
-                } catch (e: Exception) {
-                    throw RuntimeException(e)
-                }
-                return
-            }
+    /**
+     * Parses and executes [input] on behalf of [sender].
+     * Returns true when a command was found and ran without throwing.
+     */
+    fun dispatch(sender: CommandSender, input: String): Boolean {
+        var line = input.trim()
+        if (prefix.isNotEmpty() && line.startsWith(prefix)) {
+            line = line.substring(prefix.length).trim()
         }
+        if (line.isEmpty()) return false
+
+        val parts = line.split(WHITESPACE)
+        val label = parts[0]
+        val args = parts.drop(1)
+
+        val command = labels[label.lowercase()]
+        if (command == null) {
+            sender.sendMessage("Unknown command: $label")
+            printHelp(sender)
+            return false
+        }
+
+        return try {
+            command.execute(sender, args)
+            true
+        } catch (e: Exception) {
+            sender.sendMessage("Error executing '${command.name}': ${e.message}")
+            false
+        }
+    }
+
+    fun printHelp(sender: CommandSender) {
+        sender.sendMessage("Available commands:")
+        registered.values.forEach { sender.sendMessage("  ${it.usage} - ${it.description}") }
+    }
+
+    private companion object {
+        val WHITESPACE = "\\s+".toRegex()
     }
 }

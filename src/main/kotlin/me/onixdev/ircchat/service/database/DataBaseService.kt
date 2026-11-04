@@ -83,4 +83,11 @@ class DataBaseService {
             .where("username = ?", username)
             .execute()
     }
+
+    fun setBanned(username: String, banned: Boolean) {
+        db.update("users")
+            .set("banned", if (banned) 1 else 0)
+            .where("username = ?", username)
+            .execute()
+    }
 }

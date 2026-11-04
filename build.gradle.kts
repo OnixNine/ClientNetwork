@@ -51,7 +51,7 @@ tasks.shadowJar {
     }
     manifest {
         attributes(
-            "Main-Class" to "me.onixdev.ircchat.Main"
+            "Main-Class" to "Main"
         )
     }
 }

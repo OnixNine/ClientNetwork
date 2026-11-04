@@ -68,6 +68,17 @@ class DataBaseServiceTest {
     }
 
     @Test
+    fun `setBanned toggles the ban flag`() {
+        service.create("banuser", "pass")
+
+        service.setBanned("banuser", true)
+        assertTrue(service.findByUserName("banuser").banned)
+
+        service.setBanned("banuser", false)
+        assertFalse(service.findByUserName("banuser").banned)
+    }
+
+    @Test
     fun `findById returns correct entity`() {
         service.create("findme", "pass")
         val all = service.db.select().from("users").where("username = ?", "findme").fetchFirst {
