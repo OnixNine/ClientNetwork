@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.impl.s2.impl;
 
 import me.onixdev.ircchat.impl.s2.codecs.AuthResultPacketCodec;

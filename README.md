@@ -183,4 +183,16 @@ java -jar build/libs/IrcChat-1.0-SNAPSHOT.jar
 
 ## Лицензия
 
-GNU General Public License v3.0 or later — см. [`LICENSE`](LICENSE).
+Лицензирование **раздельное**:
+
+| Часть | Лицензия | Файл |
+|-------|----------|------|
+| Сервер (корневой модуль) и Fabric-мод (`:fabric`) | GNU GPL-3.0-or-later | [`LICENSE`](LICENSE) |
+| Протокол (`:protocol`) | MIT | [`protocol/LICENSE`](protocol/LICENSE) |
+
+Протокол намеренно под MIT: его можно встраивать в сторонние проекты, в том
+числе с закрытым исходным кодом. MIT распространяется только на каталог
+`protocol/`; всё остальное — под GPL-3.0.
+
+В каждом исходнике указан идентификатор лицензии в виде SPDX-заголовка
+(`SPDX-License-Identifier`).

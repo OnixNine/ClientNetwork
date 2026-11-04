@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.base;
 
 import static org.junit.jupiter.api.Assertions.*;
