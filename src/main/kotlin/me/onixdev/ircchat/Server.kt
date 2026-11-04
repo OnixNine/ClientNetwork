@@ -102,7 +102,6 @@ enum class Server {
                 println("Connection closed from ${ctx.remoteAddress}")
             }
 
-            // Auth timeout + keep-alive sweep.
             GlobalScheduler.runTaskTimer("session-tick", 1.seconds, 1.seconds) {
                 sessionManager.tick()
             }

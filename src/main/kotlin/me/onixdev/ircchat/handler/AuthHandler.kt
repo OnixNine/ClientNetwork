@@ -23,22 +23,15 @@ class AuthHandler(
     private val onAuthenticated: (NetworkContext) -> Unit = {}
 ) {
     private val logger = KotlinLogging.logger("AuthHandler")
-
-    /**
-     * Serializes authentication so two connections can not pass the
-     * "single active session" check at the same time.
-     */
     private val authLock = Any()
 
     companion object {
-        // AuthResultPacket codes
         const val LOGIN_SUCCESS = 100
         const val REGISTERED = 101
         const val INVALID_PASSWORD = 201
         const val ALREADY_LOGGED_IN = 202
         const val BANNED = 203
 
-        /** Failed password attempts allowed on a single connection before it is closed. */
         const val MAX_AUTH_ATTEMPTS = 3
     }
 
@@ -47,8 +40,6 @@ class AuthHandler(
         val entity = connectionDataManager.getConnection(ctx) ?: return
 
         synchronized(authLock) {
-            // 1. The connection is already authenticated: a repeated AuthRequestPacket
-            //    (stolen/replayed or just a buggy client) must not re-authenticate it.
             if (entity.authed) {
                 logger.warn {
                     "Ignoring re-auth from ${ctx.remoteAddress} (already authenticated as ${entity.userName})"
@@ -56,8 +47,6 @@ class AuthHandler(
                 return
             }
 
-            // 2. The account already has a live session: never replace an active
-            //    session, otherwise a leaked password could hijack it mid-session.
             val active = connectionDataManager.findAuthenticatedByUsername(pkt.username)
             if (active != null && active.ctx !== ctx) {
                 logger.warn { "Rejected login for ${pkt.username} from ${ctx.remoteAddress}: session already active" }
@@ -68,8 +57,6 @@ class AuthHandler(
 
             val user = dataBaseService.findByUserName(pkt.username)
 
-            // 3. An active ban blocks authentication. The check is lazy, so an
-            //    expired temporary ban no longer applies.
             val activeBan = punishmentService.activeBan(pkt.username)
             if (activeBan != null) {
                 logger.warn { "Banned user ${pkt.username} tried to authenticate from ${ctx.remoteAddress}" }
@@ -79,7 +66,6 @@ class AuthHandler(
             }
 
             if (!user.beforeJoined) {
-                // New account: register it.
                 dataBaseService.create(pkt.username, hash.hashPassword(pkt.password))
                 entity.userName = pkt.username
                 entity.role = "user"

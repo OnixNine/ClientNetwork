@@ -26,10 +26,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * Thin wrapper around the protocol {@link NetworkClient}. Owns the connection
- * lifecycle (connect / auth / chat / disconnect) for the test mod.
- */
 public final class IrcConnection {
 
     private IrcClientConfig config;
@@ -52,7 +48,6 @@ public final class IrcConnection {
         return authenticated;
     }
 
-    /** Packet ids must match the server registry in {@code Server.kt}. */
     private static PacketRegistry createRegistry() {
         DefaultPacketRegistry registry = new DefaultPacketRegistry();
         registry.register(0, AuthRequestPacket.class, new AuthRequestPacketCodec());
@@ -140,10 +135,7 @@ public final class IrcConnection {
                 + ", user=" + config.username;
     }
 
-    // ---- callbacks from IrcPacketHandler -----------------------------------
-
     void handleAuthResult(AuthResultPacket packet) {
-        // 100 = login ok, 101 = registered, 201 = bad password.
         if (packet.code() == 100 || packet.code() == 101) {
             authenticated = true;
             IrcTestMod.chat("§a[IRC] Auth OK (" + packet.code() + "): " + packet.msg()
@@ -182,7 +174,6 @@ public final class IrcConnection {
         IrcTestMod.chat(color + "[IRC] " + packet.message());
     }
 
-    /** Answer the server's ping so it knows this client is still alive. */
     void handleKeepAlive(KeepAlivePacket packet) {
         if (client != null && client.isConnected()) {
             client.send(new KeepAlivePacket(packet.id()));

@@ -32,7 +32,6 @@ class AuthHandlerTest {
     private val handler = AuthHandler(hash, dataBaseService, manager, punishmentService, keyProvider)
 
     init {
-        // A relaxed mock would return a non-null stub; make "not banned" explicit.
         every { punishmentService.activeBan(any()) } returns null
     }
 

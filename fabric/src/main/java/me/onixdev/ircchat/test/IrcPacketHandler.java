@@ -9,9 +9,6 @@ import ru.kseonyt.net.annotation.NetworkListener;
 import ru.kseonyt.net.annotation.PacketHandler;
 import ru.kseonyt.net.context.NetworkContext;
 
-/**
- * Packet listeners for the packets the server can push to a client.
- */
 @NetworkListener
 public final class IrcPacketHandler {
 

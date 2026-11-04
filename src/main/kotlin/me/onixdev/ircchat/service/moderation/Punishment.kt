@@ -1,9 +1,5 @@
 package me.onixdev.ircchat.service.moderation
 
-/**
- * A single moderation entry. [expiresAt] is null for permanent punishments and
- * [revoked] marks ones that were lifted manually.
- */
 data class Punishment(
     val id: Int,
     val type: PunishmentType,

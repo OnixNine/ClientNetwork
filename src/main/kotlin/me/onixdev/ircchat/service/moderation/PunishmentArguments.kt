@@ -1,11 +1,5 @@
 package me.onixdev.ircchat.service.moderation
 
-/**
- * Parses the `<user> [duration] [reason]` shape shared by /ban and /mute.
- *
- * The duration token is optional and only consumed when it actually looks like
- * one, so `/ban bob some reason` keeps the whole text as the reason.
- */
 object PunishmentArguments {
 
     data class Parsed(

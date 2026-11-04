@@ -23,7 +23,6 @@ class RoleCommand : Command(
         }
 
         dataBase.updateRole(target, role)
-        // Reflect the change on a live session immediately.
         Server.INSTANCE.connectionDataManager?.findAuthenticatedByUsername(target)?.role = role
         sender.sendMessage("Role of '$target' updated to '$role'")
     }

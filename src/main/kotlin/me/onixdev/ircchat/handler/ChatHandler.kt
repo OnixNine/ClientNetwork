@@ -19,7 +19,6 @@ class ChatHandler(
         val entity = connectionDataManager.getConnection(ctx) ?: return
         if (!entity.authed) return
 
-        // An active mute silently drops the message and tells the author why.
         val mute = punishmentService.activeMute(entity.userName)
         if (mute != null) {
             entity.sendSystem("WARN", "You are muted: ${mute.reason} (${mute.statusText()})")

@@ -3,11 +3,6 @@ package me.onixdev.ircchat.console
 import me.onixdev.ircchat.Server
 import java.util.Scanner
 
-/**
- * Reads console lines and feeds them to the [me.onixdev.ircchat.command.api.CommandManager].
- * Runs on a daemon thread so the network server keeps running and the loop
- * never dies on EOF or a single bad command.
- */
 object ConsoleManager {
     fun init() {
         val thread = Thread(::runLoop, "irc-console")

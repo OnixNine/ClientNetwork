@@ -11,12 +11,6 @@ import me.onixdev.ircchat.command.impl.StopCommand
 import me.onixdev.ircchat.command.impl.UnbanCommand
 import me.onixdev.ircchat.command.impl.UnmuteCommand
 
-/**
- * Registry and dispatcher for console commands.
- *
- * The [prefix] is optional: console input normally has none, but a prefix is
- * useful if the same manager is ever fed network chat lines.
- */
 class CommandManager {
 
     private val registered = LinkedHashMap<String, Command>()
@@ -52,13 +46,8 @@ class CommandManager {
         labels.entries.removeIf { it.value === command }
     }
 
-    /** Console entry point. */
     fun handleCommand(input: String) = dispatch(ConsoleSender, input)
 
-    /**
-     * Parses and executes [input] on behalf of [sender].
-     * Returns true when a command was found and ran without throwing.
-     */
     fun dispatch(sender: CommandSender, input: String): Boolean {
         var line = input.trim()
         if (prefix.isNotEmpty() && line.startsWith(prefix)) {

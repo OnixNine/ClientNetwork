@@ -5,13 +5,6 @@ import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.database.DataBaseService
 import java.sql.ResultSet
 
-/**
- * Persistent moderation store backed by the `punishments` table.
- *
- * Expiry is evaluated lazily: every read filters out revoked and expired rows,
- * so no background sweep is needed and a temporary punishment stops applying
- * the moment it runs out.
- */
 class PunishmentService(
     private val dataBaseService: DataBaseService,
     private val connectionDataManager: ConnectionDataManager,
@@ -45,14 +38,12 @@ class PunishmentService(
 
     fun isMuted(userName: String): Boolean = activeMute(userName) != null
 
-    /** Every punishment ever issued to [userName], newest first. */
     fun history(userName: String): List<Punishment> =
         db.select().from("punishments")
             .where("username = ?", userName)
             .desc("id")
             .fetch { map(it) }
 
-    /** All currently active bans and mutes, newest first. */
     fun activePunishments(): List<Punishment> {
         val now = clock()
         return db.select().from("punishments")

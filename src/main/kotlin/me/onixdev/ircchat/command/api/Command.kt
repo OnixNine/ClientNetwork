@@ -6,15 +6,10 @@ abstract class Command(
     usageOrNull: String? = null,
     val aliases: List<String> = emptyList()
 ) {
-    /** How the command is invoked in help output, e.g. "/kick <user> [reason]". */
     val usage: String = usageOrNull ?: "/$name"
 
     abstract fun execute(sender: CommandSender, args: List<String>)
 
-    /**
-     * Validates the argument count and prints [usage] when it is wrong.
-     * Returns true when execution may continue.
-     */
     protected fun requireArgs(
         sender: CommandSender,
         args: List<String>,

@@ -1,18 +1,11 @@
 package me.onixdev.ircchat.service.moderation
 
-/** Result of parsing a duration token such as "1d", "30m" or "perm". */
 sealed interface ParsedDuration {
     data class Temporary(val millis: Long) : ParsedDuration
     data object Permanent : ParsedDuration
     data object NotADuration : ParsedDuration
 }
 
-/**
- * Parses and formats punishment durations.
- *
- * Accepted forms: `30s`, `10m`, `2h`, `3d`, `1w`, a bare number (minutes),
- * and `perm` / `permanent` / `forever` / `never` / `-1` for a permanent one.
- */
 object DurationParser {
 
     private val UNITS = mapOf(
@@ -43,7 +36,6 @@ object DurationParser {
         return ParsedDuration.NotADuration
     }
 
-    /** Human readable form, e.g. "1d 2h 3m". */
     fun format(millis: Long): String {
         var seconds = millis / 1_000
         if (seconds <= 0) return "0s"

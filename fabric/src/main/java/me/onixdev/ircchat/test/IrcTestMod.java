@@ -7,20 +7,6 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
-/**
- * Client-only entrypoint. Exposes the {@code /irctest} command and (optionally)
- * auto-connects to the IRC protocol server on startup.
- *
- * Commands:
- * <pre>
- *   /irctest connect            - connect + authenticate using config
- *   /irctest auth               - (re)send the auth request
- *   /irctest disconnect         - close the connection
- *   /irctest status             - print the current state
- *   /irctest send &lt;message&gt;    - send a chat message to the server
- *   /irctest reload             - reload config from disk
- * </pre>
- */
 public final class IrcTestMod implements ClientModInitializer {
 
     private static IrcClientConfig config;
@@ -73,7 +59,6 @@ public final class IrcTestMod implements ClientModInitializer {
         }
     }
 
-    /** Print a message into the client chat HUD (thread-safe). */
     public static void chat(String message) {
         MinecraftClient client = MinecraftClient.getInstance();
         client.execute(() -> {

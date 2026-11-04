@@ -26,7 +26,6 @@ class CommandManagerTest {
         }
     }
 
-    /** A manager with the defaults removed, containing only [commands]. */
     private fun isolated(vararg commands: Command): CommandManager {
         val manager = CommandManager()
         manager.commands.toList().forEach { manager.unregister(it.name) }

@@ -7,7 +7,6 @@ import ru.kseonyt.net.packet.PacketCodec;
 public class ClientChatMessagePacketCodec implements PacketCodec<ClientChatMessagePacket> {
     @Override
     public void encode(ClientChatMessagePacket pkt, PacketBuffer buf) {
-        // Order must match the record (sender, message, author) and decode().
         buf.writeString(pkt.sender());
         buf.writeString(pkt.message());
         buf.writeString(pkt.author());

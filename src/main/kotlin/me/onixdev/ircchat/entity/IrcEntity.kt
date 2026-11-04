@@ -22,7 +22,6 @@ class IrcEntity(
         sendPacket(ChatBroadcastPacket(author, message))
     }
 
-    /** Sends an out-of-band server notice (timeouts, kicks, admin messages). */
     fun sendSystem(level: String, message: String) {
         sendPacket(SystemMessagePacket(level, message))
     }

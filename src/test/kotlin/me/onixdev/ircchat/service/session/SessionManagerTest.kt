@@ -65,7 +65,6 @@ class SessionManagerTest {
 
         assertTrue(manager.onKeepAlive(c, 42L))
 
-        // Only the reply time has moved: the next ping is a full interval away.
         now += SessionManager.DEFAULT_KEEP_ALIVE_INTERVAL_MILLIS / 2
         manager.tick()
         verify(exactly = 1) { c.send(any<KeepAlivePacket>()) }
