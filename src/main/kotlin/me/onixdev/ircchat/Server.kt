@@ -27,6 +27,7 @@ import me.onixdev.ircchat.service.message.BroadCastMessageService
 import me.onixdev.ircchat.service.message.validation.MessageLengthLimit
 import me.onixdev.ircchat.service.message.validation.MessageSpamDelay
 import me.onixdev.ircchat.service.message.validation.MessageValidationPattern
+import me.onixdev.ircchat.service.moderation.PunishmentService
 import me.onixdev.ircchat.service.session.SessionManager
 import me.onixdev.ircchat.service.task.GlobalScheduler
 import me.onixdev.ircchat.util.config.BaseConfig
@@ -48,6 +49,8 @@ enum class Server {
     INSTANCE;
 
     var connectionDataManager: ConnectionDataManager? = null
+    var punishmentService: PunishmentService? = null
+        private set
     private var networkServer: NetworkServer? = null
     private var port = 0
     private var config: BaseConfig? = null
@@ -65,13 +68,16 @@ enum class Server {
             connectionDataManager = ConnectionDataManager()
 
             val sessionManager = SessionManager(connectionDataManager!!)
+            val punishmentService = PunishmentService(dataBaseService, connectionDataManager!!)
+            this.punishmentService = punishmentService
             val authHandler = AuthHandler(
                 config!!.hash,
                 dataBaseService,
                 connectionDataManager!!,
+                punishmentService,
                 onAuthenticated = sessionManager::onAuthenticated
             )
-            val chatHandler = ChatHandler(connectionDataManager!!)
+            val chatHandler = ChatHandler(connectionDataManager!!, punishmentService)
             val keepAliveHandler = KeepAliveHandler(sessionManager)
 
             networkServer = Net.server()
@@ -170,7 +176,6 @@ enum class Server {
         val file = File("config.json")
         if (!file.exists()) {
             saveConfig()
-            return
         }
         try {
             val json = String(Files.readAllBytes(file.toPath()))

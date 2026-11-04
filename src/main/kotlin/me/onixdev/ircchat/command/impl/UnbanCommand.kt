@@ -12,15 +12,17 @@ class UnbanCommand : Command(
     override fun execute(sender: CommandSender, args: List<String>) {
         if (!requireArgs(sender, args, min = 1, max = 1)) return
 
-        val target = args[0]
-        val dataBase = Server.INSTANCE.getDataBase()
-
-        if (!dataBase.findByUserName(target).beforeJoined) {
-            sender.sendMessage("Unknown user '$target'")
+        val service = Server.INSTANCE.punishmentService
+        if (service == null) {
+            sender.sendMessage("Moderation service is not available")
             return
         }
 
-        dataBase.setBanned(target, false)
-        sender.sendMessage("Unbanned '$target'")
+        val target = args[0]
+        if (service.unban(target)) {
+            sender.sendMessage("Unbanned '$target'")
+        } else {
+            sender.sendMessage("'$target' has no active ban")
+        }
     }
 }

@@ -37,7 +37,14 @@ class CommandManagerTest {
     @Test
     fun `defaults are registered`() {
         val names = CommandManager().commands.map { it.name.lowercase() }
-        assertTrue(names.containsAll(listOf("kick", "ban", "unban", "role", "broadcast", "stop")))
+        assertTrue(
+            names.containsAll(
+                listOf(
+                    "kick", "ban", "unban", "mute", "unmute",
+                    "role", "history", "plist", "broadcast", "stop"
+                )
+            )
+        )
     }
 
     @Test

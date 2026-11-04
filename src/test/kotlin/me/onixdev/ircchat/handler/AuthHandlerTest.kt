@@ -9,6 +9,9 @@ import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.Hash
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.database.TempedIrcEntity
+import me.onixdev.ircchat.service.moderation.Punishment
+import me.onixdev.ircchat.service.moderation.PunishmentService
+import me.onixdev.ircchat.service.moderation.PunishmentType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -24,8 +27,14 @@ class AuthHandlerTest {
     private val hash: Hash = mockk()
     private val dataBaseService: DataBaseService = mockk()
     private val manager = ConnectionDataManager()
+    private val punishmentService: PunishmentService = mockk(relaxed = true)
     private val keyProvider: () -> SecretKey = { SecretKeySpec(ByteArray(16), "AES") }
-    private val handler = AuthHandler(hash, dataBaseService, manager, keyProvider)
+    private val handler = AuthHandler(hash, dataBaseService, manager, punishmentService, keyProvider)
+
+    init {
+        // A relaxed mock would return a non-null stub; make "not banned" explicit.
+        every { punishmentService.activeBan(any()) } returns null
+    }
 
     private fun ctx(): NetworkContext = mockk(relaxed = true)
 
@@ -73,8 +82,17 @@ class AuthHandlerTest {
     fun `banned account is rejected`() {
         val c = ctx()
         manager.addConnection(c)
-        every { dataBaseService.findByUserName("alice") } returns
-            TempedIrcEntity("alice", "hash", "user", beforeJoined = true, banned = true)
+        every { dataBaseService.findByUserName("alice") } returns registeredUser()
+        every { punishmentService.activeBan("alice") } returns Punishment(
+            id = 1,
+            type = PunishmentType.BAN,
+            userName = "alice",
+            reason = "spam",
+            author = "CONSOLE",
+            issuedAt = 0,
+            expiresAt = null,
+            revoked = false
+        )
 
         handler.onAuthRequest(AuthRequestPacket("cli", "alice", "pw"), c)
 

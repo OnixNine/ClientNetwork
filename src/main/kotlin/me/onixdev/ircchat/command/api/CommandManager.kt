@@ -2,10 +2,14 @@ package me.onixdev.ircchat.command.api
 
 import me.onixdev.ircchat.command.impl.BanCommand
 import me.onixdev.ircchat.command.impl.BroadCastCommand
+import me.onixdev.ircchat.command.impl.HistoryCommand
 import me.onixdev.ircchat.command.impl.KickCommand
+import me.onixdev.ircchat.command.impl.MuteCommand
+import me.onixdev.ircchat.command.impl.PunishmentListCommand
 import me.onixdev.ircchat.command.impl.RoleCommand
 import me.onixdev.ircchat.command.impl.StopCommand
 import me.onixdev.ircchat.command.impl.UnbanCommand
+import me.onixdev.ircchat.command.impl.UnmuteCommand
 
 /**
  * Registry and dispatcher for console commands.
@@ -25,6 +29,10 @@ class CommandManager {
         register(KickCommand())
         register(BanCommand())
         register(UnbanCommand())
+        register(MuteCommand())
+        register(UnmuteCommand())
+        register(HistoryCommand())
+        register(PunishmentListCommand())
         register(BroadCastCommand())
         register(StopCommand())
     }

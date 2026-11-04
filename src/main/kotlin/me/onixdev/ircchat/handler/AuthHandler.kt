@@ -8,6 +8,7 @@ import me.onixdev.ircchat.impl.s2.impl.KeyExchangePacket
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.Hash
 import me.onixdev.ircchat.service.database.DataBaseService
+import me.onixdev.ircchat.service.moderation.PunishmentService
 import ru.kseonyt.net.annotation.PacketHandler
 import ru.kseonyt.net.context.NetworkContext
 import java.util.Base64
@@ -17,6 +18,7 @@ class AuthHandler(
     private val hash: Hash,
     private val dataBaseService: DataBaseService,
     private val connectionDataManager: ConnectionDataManager,
+    private val punishmentService: PunishmentService,
     private val aesKeyProvider: () -> SecretKey = { Server.INSTANCE.getAesKey() },
     private val onAuthenticated: (NetworkContext) -> Unit = {}
 ) {
@@ -66,10 +68,12 @@ class AuthHandler(
 
             val user = dataBaseService.findByUserName(pkt.username)
 
-            // 3. Banned accounts can not authenticate.
-            if (user.banned) {
+            // 3. An active ban blocks authentication. The check is lazy, so an
+            //    expired temporary ban no longer applies.
+            val activeBan = punishmentService.activeBan(pkt.username)
+            if (activeBan != null) {
                 logger.warn { "Banned user ${pkt.username} tried to authenticate from ${ctx.remoteAddress}" }
-                ctx.send(AuthResultPacket(pkt.sender, BANNED, "You are banned", "user", pkt.username))
+                ctx.send(AuthResultPacket(pkt.sender, BANNED, activeBan.banMessage(), "user", pkt.username))
                 ctx.disconnect("Banned")
                 return
             }

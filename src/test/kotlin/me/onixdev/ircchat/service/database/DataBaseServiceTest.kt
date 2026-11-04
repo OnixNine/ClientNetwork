@@ -8,18 +8,17 @@ import java.io.File
 class DataBaseServiceTest {
 
     private lateinit var service: DataBaseService
-    private val dbFile = File("test_app.db")
+    private val dbFile = File("test_users.db")
 
     @BeforeAll
     fun setUp() {
         if (dbFile.exists()) dbFile.delete()
-        service = DataBaseService()
+        service = DataBaseService(dbFile.name)
     }
 
     @AfterAll
     fun tearDown() {
         dbFile.delete()
-        File("app.db").delete()
     }
 
     @AfterEach
@@ -65,17 +64,6 @@ class DataBaseServiceTest {
         val entity = service.findByUserName("roleuser")
 
         assertEquals("admin", entity.role)
-    }
-
-    @Test
-    fun `setBanned toggles the ban flag`() {
-        service.create("banuser", "pass")
-
-        service.setBanned("banuser", true)
-        assertTrue(service.findByUserName("banuser").banned)
-
-        service.setBanned("banuser", false)
-        assertFalse(service.findByUserName("banuser").banned)
     }
 
     @Test
