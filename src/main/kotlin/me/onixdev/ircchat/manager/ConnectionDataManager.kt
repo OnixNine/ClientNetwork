@@ -19,6 +19,18 @@ class ConnectionDataManager {
         return connections[ctx]
     }
 
+    /**
+     * Returns the live authenticated session for [username], if there is one.
+     * Used to enforce a single active session per account.
+     */
+    fun findAuthenticatedByUsername(username: String): IrcEntity? {
+        return connections.values.firstOrNull {
+            it.authed && it.userName.equals(username, ignoreCase = true)
+        }
+    }
+
+    fun isOnline(username: String): Boolean = findAuthenticatedByUsername(username) != null
+
     fun getAll(): Collection<IrcEntity> {
         return connections.values
     }

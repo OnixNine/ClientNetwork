@@ -11,6 +11,7 @@ class IrcEntity(
     var userName: String = ""
     var authed: Boolean = false
     var lastMessageTime: Long = 0
+    var failedAuthAttempts: Int = 0
 
     fun sendPacket(packet: ru.kseonyt.net.packet.Packet) {
         ctx.send(packet)

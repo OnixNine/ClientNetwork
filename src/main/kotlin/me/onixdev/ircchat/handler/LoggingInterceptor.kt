@@ -16,6 +16,7 @@ class LoggingInterceptor : PacketInterceptor<Packet?> {
     }
 
     override fun onWrite(pkt: Packet, ctx: NetworkContext, chain: InterceptorChain) {
+        println("[INTERCEPTOR] Server sended packet: " + pkt.javaClass.getSimpleName())
         chain.proceed()
     }
 }
