@@ -2,6 +2,7 @@ package me.onixdev.ircchat.entity
 
 import me.onixdev.ircchat.base.entity.UserEntry
 import me.onixdev.ircchat.impl.s2.impl.ChatBroadcastPacket
+import me.onixdev.ircchat.impl.s2.impl.SystemMessagePacket
 import ru.kseonyt.net.context.NetworkContext
 
 class IrcEntity(
@@ -19,6 +20,11 @@ class IrcEntity(
 
     fun sendMessage(author: UserEntry, message: String) {
         sendPacket(ChatBroadcastPacket(author, message))
+    }
+
+    /** Sends an out-of-band server notice (timeouts, kicks, admin messages). */
+    fun sendSystem(level: String, message: String) {
+        sendPacket(SystemMessagePacket(level, message))
     }
 
     fun toUserEntry(): UserEntry {

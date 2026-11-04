@@ -7,10 +7,14 @@ import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket;
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket;
 import me.onixdev.ircchat.impl.s2.codecs.AuthResultPacketCodec;
 import me.onixdev.ircchat.impl.s2.codecs.ChatBroadCastPacketCodec;
+import me.onixdev.ircchat.impl.s2.codecs.KeepAlivePacketCodec;
 import me.onixdev.ircchat.impl.s2.codecs.KeyExchangePacketCodec;
+import me.onixdev.ircchat.impl.s2.codecs.SystemMessagePacketCodec;
 import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket;
 import me.onixdev.ircchat.impl.s2.impl.ChatBroadcastPacket;
+import me.onixdev.ircchat.impl.s2.impl.KeepAlivePacket;
 import me.onixdev.ircchat.impl.s2.impl.KeyExchangePacket;
+import me.onixdev.ircchat.impl.s2.impl.SystemMessagePacket;
 import ru.kseonyt.net.Net;
 import ru.kseonyt.net.client.NetworkClient;
 import ru.kseonyt.net.client.NetworkClientBuilder;
@@ -56,6 +60,8 @@ public final class IrcConnection {
         registry.register(101, AuthResultPacket.class, new AuthResultPacketCodec());
         registry.register(102, ChatBroadcastPacket.class, new ChatBroadCastPacketCodec());
         registry.register(103, KeyExchangePacket.class, new KeyExchangePacketCodec());
+        registry.register(104, SystemMessagePacket.class, new SystemMessagePacketCodec());
+        registry.register(105, KeepAlivePacket.class, new KeepAlivePacketCodec());
         return registry;
     }
 
@@ -157,5 +163,29 @@ public final class IrcConnection {
         UserEntry sender = packet.sender();
         String who = sender == null ? "?" : sender.username();
         IrcTestMod.chat("§d[IRC] <" + who + "> §f" + packet.message());
+    }
+
+    void handleSystemMessage(SystemMessagePacket packet) {
+        String level = packet.level() == null ? "INFO" : packet.level().toUpperCase();
+        String color;
+        switch (level) {
+            case "ERROR":
+                color = "§c";
+                break;
+            case "WARN":
+                color = "§e";
+                break;
+            default:
+                color = "§7";
+                break;
+        }
+        IrcTestMod.chat(color + "[IRC] " + packet.message());
+    }
+
+    /** Answer the server's ping so it knows this client is still alive. */
+    void handleKeepAlive(KeepAlivePacket packet) {
+        if (client != null && client.isConnected()) {
+            client.send(new KeepAlivePacket(packet.id()));
+        }
     }
 }

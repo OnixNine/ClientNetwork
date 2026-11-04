@@ -17,7 +17,8 @@ class AuthHandler(
     private val hash: Hash,
     private val dataBaseService: DataBaseService,
     private val connectionDataManager: ConnectionDataManager,
-    private val aesKeyProvider: () -> SecretKey = { Server.INSTANCE.getAesKey() }
+    private val aesKeyProvider: () -> SecretKey = { Server.INSTANCE.getAesKey() },
+    private val onAuthenticated: (NetworkContext) -> Unit = {}
 ) {
     private val logger = KotlinLogging.logger("AuthHandler")
 
@@ -82,6 +83,7 @@ class AuthHandler(
                 entity.failedAuthAttempts = 0
                 ctx.send(AuthResultPacket(pkt.sender, REGISTERED, "Registered", entity.role, pkt.username))
                 sendKeyExchange(ctx)
+                onAuthenticated(ctx)
                 logger.info { "User ${pkt.username} registered" }
             } else if (hash.verifyPassword(pkt.password, user.passWord)) {
                 entity.userName = user.userName
@@ -90,6 +92,7 @@ class AuthHandler(
                 entity.failedAuthAttempts = 0
                 ctx.send(AuthResultPacket(pkt.sender, LOGIN_SUCCESS, "Auth Success!", entity.role, pkt.username))
                 sendKeyExchange(ctx)
+                onAuthenticated(ctx)
                 logger.info { "User ${pkt.username} authenticated" }
             } else {
                 entity.authed = false

@@ -4,6 +4,7 @@ import me.onixdev.ircchat.command.api.CommandManager
 import me.onixdev.ircchat.console.ConsoleManager
 import me.onixdev.ircchat.handler.AuthHandler
 import me.onixdev.ircchat.handler.ChatHandler
+import me.onixdev.ircchat.handler.KeepAliveHandler
 import me.onixdev.ircchat.handler.LoggingInterceptor
 import me.onixdev.ircchat.impl.c2.codecs.AuthRequestPacketCodec
 import me.onixdev.ircchat.impl.c2.codecs.ClientChatMessagePacketCodec
@@ -11,10 +12,14 @@ import me.onixdev.ircchat.impl.c2.impl.AuthRequestPacket
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.impl.s2.codecs.AuthResultPacketCodec
 import me.onixdev.ircchat.impl.s2.codecs.ChatBroadCastPacketCodec
+import me.onixdev.ircchat.impl.s2.codecs.KeepAlivePacketCodec
 import me.onixdev.ircchat.impl.s2.codecs.KeyExchangePacketCodec
+import me.onixdev.ircchat.impl.s2.codecs.SystemMessagePacketCodec
 import me.onixdev.ircchat.impl.s2.impl.AuthResultPacket
 import me.onixdev.ircchat.impl.s2.impl.ChatBroadcastPacket
+import me.onixdev.ircchat.impl.s2.impl.KeepAlivePacket
 import me.onixdev.ircchat.impl.s2.impl.KeyExchangePacket
+import me.onixdev.ircchat.impl.s2.impl.SystemMessagePacket
 import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.HashFactory
 import me.onixdev.ircchat.service.database.DataBaseService
@@ -22,6 +27,8 @@ import me.onixdev.ircchat.service.message.BroadCastMessageService
 import me.onixdev.ircchat.service.message.validation.MessageLengthLimit
 import me.onixdev.ircchat.service.message.validation.MessageSpamDelay
 import me.onixdev.ircchat.service.message.validation.MessageValidationPattern
+import me.onixdev.ircchat.service.session.SessionManager
+import me.onixdev.ircchat.service.task.GlobalScheduler
 import me.onixdev.ircchat.util.config.BaseConfig
 import org.json.JSONObject
 import ru.kseonyt.net.Net
@@ -35,6 +42,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.seconds
 
 enum class Server {
     INSTANCE;
@@ -56,8 +64,15 @@ enum class Server {
             val registry = createPacketRegistry()
             connectionDataManager = ConnectionDataManager()
 
-            val authHandler = AuthHandler(config!!.hash, dataBaseService, connectionDataManager!!)
+            val sessionManager = SessionManager(connectionDataManager!!)
+            val authHandler = AuthHandler(
+                config!!.hash,
+                dataBaseService,
+                connectionDataManager!!,
+                onAuthenticated = sessionManager::onAuthenticated
+            )
             val chatHandler = ChatHandler(connectionDataManager!!)
+            val keepAliveHandler = KeepAliveHandler(sessionManager)
 
             networkServer = Net.server()
                 .port(config!!.port)
@@ -67,15 +82,23 @@ enum class Server {
                 .interceptor(LoggingInterceptor())
                 .listener(authHandler)
                 .listener(chatHandler)
+                .listener(keepAliveHandler)
                 .start()
 
             networkServer!!.onConnect { ctx ->
                 connectionDataManager!!.addConnection(ctx)
+                sessionManager.onConnected(ctx)
                 println("New connection from ${ctx.remoteAddress}")
             }
             networkServer!!.onDisconnect { ctx ->
+                sessionManager.onDisconnected(ctx)
                 connectionDataManager!!.removeConnection(ctx)
                 println("Connection closed from ${ctx.remoteAddress}")
+            }
+
+            // Auth timeout + keep-alive sweep.
+            GlobalScheduler.runTaskTimer("session-tick", 1.seconds, 1.seconds) {
+                sessionManager.tick()
             }
 
             println("Server started on port ${config?.port}")
@@ -100,6 +123,8 @@ enum class Server {
         registry.register(101, AuthResultPacket::class.java, AuthResultPacketCodec())
         registry.register(102, ChatBroadcastPacket::class.java, ChatBroadCastPacketCodec())
         registry.register(103, KeyExchangePacket::class.java, KeyExchangePacketCodec())
+        registry.register(104, SystemMessagePacket::class.java, SystemMessagePacketCodec())
+        registry.register(105, KeepAlivePacket::class.java, KeepAlivePacketCodec())
         return registry
     }
 
@@ -170,6 +195,7 @@ enum class Server {
     fun getDataBase(): DataBaseService = dataBaseService
 
     fun stop() {
+        GlobalScheduler.cancelTask("session-tick")
         networkServer?.shutdown()
         println("Server stopped")
         exitProcess(0)
