@@ -5,11 +5,13 @@ package me.onixdev.ircchat.command.impl
 import me.onixdev.ircchat.Server
 import me.onixdev.ircchat.command.api.Command
 import me.onixdev.ircchat.command.api.CommandSender
+import me.onixdev.ircchat.service.permission.Permission
 
 class UnbanCommand : Command(
     "unban",
     "Lift a ban so the user can authenticate again",
-    "/unban <user>"
+    "/unban <user>",
+    permission = Permission.UNBAN
 ) {
     override fun execute(sender: CommandSender, args: List<String>) {
         if (!requireArgs(sender, args, min = 1, max = 1)) return

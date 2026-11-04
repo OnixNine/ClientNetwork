@@ -7,11 +7,13 @@ import me.onixdev.ircchat.command.api.Command
 import me.onixdev.ircchat.command.api.CommandSender
 import me.onixdev.ircchat.service.moderation.ParsedDuration
 import me.onixdev.ircchat.service.moderation.PunishmentArguments
+import me.onixdev.ircchat.service.permission.Permission
 
 class BanCommand : Command(
     "ban",
     "Ban a user permanently or for a duration",
-    "/ban <user> [duration] [reason]"
+    "/ban <user> [duration] [reason]",
+    permission = Permission.BAN
 ) {
     override fun execute(sender: CommandSender, args: List<String>) {
         val service = Server.INSTANCE.punishmentService
@@ -20,7 +22,7 @@ class BanCommand : Command(
             return
         }
 
-        val parsed = PunishmentArguments.parse(args, defaultReason = "Banned by console")
+        val parsed = PunishmentArguments.parse(args, defaultReason = "Banned by ${sender.name}")
         if (parsed == null) {
             sender.sendMessage("Usage: $usage")
             return

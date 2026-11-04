@@ -2,11 +2,14 @@
 // Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.command.api
 
+import me.onixdev.ircchat.service.permission.Permission
+
 abstract class Command(
     val name: String,
     val description: String = "",
     usageOrNull: String? = null,
-    val aliases: List<String> = emptyList()
+    val aliases: List<String> = emptyList(),
+    val permission: Permission = Permission.CHAT
 ) {
     val usage: String = usageOrNull ?: "/$name"
 

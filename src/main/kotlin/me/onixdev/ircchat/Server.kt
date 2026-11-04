@@ -79,7 +79,7 @@ enum class Server {
                 punishmentService,
                 onAuthenticated = sessionManager::onAuthenticated
             )
-            val chatHandler = ChatHandler(connectionDataManager!!, punishmentService)
+            val chatHandler = ChatHandler(connectionDataManager!!, punishmentService, commandManager)
             val keepAliveHandler = KeepAliveHandler(sessionManager)
 
             networkServer = Net.server()

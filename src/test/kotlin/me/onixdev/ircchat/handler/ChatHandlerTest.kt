@@ -5,6 +5,7 @@ package me.onixdev.ircchat.handler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import me.onixdev.ircchat.command.api.CommandManager
 import me.onixdev.ircchat.impl.c2.impl.ClientChatMessagePacket
 import me.onixdev.ircchat.impl.s2.impl.SystemMessagePacket
 import me.onixdev.ircchat.manager.ConnectionDataManager
@@ -19,16 +20,22 @@ class ChatHandlerTest {
 
     private val connections = ConnectionDataManager()
     private val punishmentService: PunishmentService = mockk(relaxed = true)
-    private val handler = ChatHandler(connections, punishmentService)
+    private val commandManager: CommandManager = mockk(relaxed = true)
+    private val handler = ChatHandler(connections, punishmentService, commandManager)
 
-    @Test
-    fun `a muted user's message is dropped and explained`() {
+    private fun authedConnection(userName: String = "alice"): NetworkContext {
         val ctx = mockk<NetworkContext>(relaxed = true)
         connections.addConnection(ctx)
         connections.getConnection(ctx)!!.apply {
-            userName = "alice"
+            this.userName = userName
             authed = true
         }
+        return ctx
+    }
+
+    @Test
+    fun `a muted user's message is dropped and explained`() {
+        val ctx = authedConnection()
         every { punishmentService.activeMute("alice") } returns Punishment(
             id = 1,
             type = PunishmentType.MUTE,
@@ -46,6 +53,42 @@ class ChatHandlerTest {
     }
 
     @Test
+    fun `a prefixed message is dispatched as a command`() {
+        val ctx = authedConnection()
+        every { punishmentService.activeMute("alice") } returns null
+
+        handler.onChatMessage(ClientChatMessagePacket("fabric", "!plist", "alice"), ctx)
+
+        verify { commandManager.dispatch(any(), "!plist") }
+    }
+
+    @Test
+    fun `a plain message is not treated as a command`() {
+        val ctx = authedConnection()
+
+        handler.onChatMessage(ClientChatMessagePacket("fabric", "hello all", "alice"), ctx)
+
+        verify(exactly = 0) { commandManager.dispatch(any(), any()) }
+    }
+
+    @Test
+    fun `a user without permission is denied`() {
+        val ctx = authedConnection()
+        every { punishmentService.activeMute("alice") } returns null
+        val realHandler = ChatHandler(connections, punishmentService, CommandManager())
+
+        realHandler.onChatMessage(ClientChatMessagePacket("fabric", "!ban bob", "alice"), ctx)
+
+        verify {
+            ctx.send(
+                match<SystemMessagePacket> {
+                    it.message().contains("permission") && it.message().contains("ban")
+                }
+            )
+        }
+    }
+
+    @Test
     fun `an unauthorised connection message is ignored`() {
         val ctx = mockk<NetworkContext>(relaxed = true)
         connections.addConnection(ctx)
@@ -53,5 +96,6 @@ class ChatHandlerTest {
         handler.onChatMessage(ClientChatMessagePacket("fabric", "hi", "alice"), ctx)
 
         verify(exactly = 0) { ctx.send(any<Packet>()) }
+        verify(exactly = 0) { commandManager.dispatch(any(), any()) }
     }
 }

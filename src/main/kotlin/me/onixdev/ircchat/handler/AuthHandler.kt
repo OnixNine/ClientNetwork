@@ -11,6 +11,7 @@ import me.onixdev.ircchat.manager.ConnectionDataManager
 import me.onixdev.ircchat.service.auth.Hash
 import me.onixdev.ircchat.service.database.DataBaseService
 import me.onixdev.ircchat.service.moderation.PunishmentService
+import me.onixdev.ircchat.service.permission.Role
 import ru.kseonyt.net.annotation.PacketHandler
 import ru.kseonyt.net.context.NetworkContext
 import java.util.Base64
@@ -70,7 +71,7 @@ class AuthHandler(
             if (!user.beforeJoined) {
                 dataBaseService.create(pkt.username, hash.hashPassword(pkt.password))
                 entity.userName = pkt.username
-                entity.role = "user"
+                entity.role = Role.USER.display
                 entity.authed = true
                 entity.failedAuthAttempts = 0
                 ctx.send(AuthResultPacket(pkt.sender, REGISTERED, "Registered", entity.role, pkt.username))
@@ -79,7 +80,7 @@ class AuthHandler(
                 logger.info { "User ${pkt.username} registered" }
             } else if (hash.verifyPassword(pkt.password, user.passWord)) {
                 entity.userName = user.userName
-                entity.role = user.role
+                entity.role = Role.fromString(user.role).display
                 entity.authed = true
                 entity.failedAuthAttempts = 0
                 ctx.send(AuthResultPacket(pkt.sender, LOGIN_SUCCESS, "Auth Success!", entity.role, pkt.username))

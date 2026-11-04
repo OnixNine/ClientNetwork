@@ -5,12 +5,14 @@ package me.onixdev.ircchat.command.impl
 import me.onixdev.ircchat.Server
 import me.onixdev.ircchat.command.api.Command
 import me.onixdev.ircchat.command.api.CommandSender
+import me.onixdev.ircchat.service.permission.Permission
 
 class PunishmentListCommand : Command(
     "plist",
     "List all currently active bans and mutes",
     "/plist",
-    aliases = listOf("punishments", "active")
+    aliases = listOf("punishments", "active"),
+    permission = Permission.PLIST
 ) {
     override fun execute(sender: CommandSender, args: List<String>) {
         val service = Server.INSTANCE.punishmentService

@@ -18,7 +18,7 @@ class CommandManager {
     private val registered = LinkedHashMap<String, Command>()
     private val labels = HashMap<String, Command>()
 
-    var prefix: String = ""
+    var prefix: String = "!"
 
     init {
         register(RoleCommand())
@@ -64,7 +64,12 @@ class CommandManager {
         val command = labels[label.lowercase()]
         if (command == null) {
             sender.sendMessage("Unknown command: $label")
-            printHelp(sender)
+            if (sender === ConsoleSender) printHelp(sender)
+            return false
+        }
+
+        if (!sender.hasPermission(command.permission)) {
+            sender.sendMessage("You don't have permission to use /${command.name}")
             return false
         }
 
@@ -79,7 +84,11 @@ class CommandManager {
 
     fun printHelp(sender: CommandSender) {
         sender.sendMessage("Available commands:")
-        registered.values.forEach { sender.sendMessage("  ${it.usage} - ${it.description}") }
+        registered.values.forEach {
+            if (sender.hasPermission(it.permission)) {
+                sender.sendMessage("  ${it.usage} - ${it.description}")
+            }
+        }
     }
 
     private companion object {

@@ -156,7 +156,9 @@ public final class IrcConnection {
     void handleBroadcast(ChatBroadcastPacket packet) {
         UserEntry sender = packet.sender();
         String who = sender == null ? "?" : sender.username();
-        IrcTestMod.chat("§d[IRC] <" + who + "> §f" + packet.message());
+        String role = sender == null ? "" : sender.role();
+        String tag = (role == null || role.isBlank()) ? "" : "§7[" + role + "] ";
+        IrcTestMod.chat("§d[IRC] " + tag + "<" + who + "> §f" + packet.message());
     }
 
     void handleSystemMessage(SystemMessagePacket packet) {

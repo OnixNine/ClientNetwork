@@ -7,11 +7,13 @@ import me.onixdev.ircchat.command.api.Command
 import me.onixdev.ircchat.command.api.CommandSender
 import me.onixdev.ircchat.service.moderation.ParsedDuration
 import me.onixdev.ircchat.service.moderation.PunishmentArguments
+import me.onixdev.ircchat.service.permission.Permission
 
 class MuteCommand : Command(
     "mute",
     "Mute a user permanently or for a duration",
-    "/mute <user> [duration] [reason]"
+    "/mute <user> [duration] [reason]",
+    permission = Permission.MUTE
 ) {
     override fun execute(sender: CommandSender, args: List<String>) {
         val service = Server.INSTANCE.punishmentService
@@ -20,7 +22,7 @@ class MuteCommand : Command(
             return
         }
 
-        val parsed = PunishmentArguments.parse(args, defaultReason = "Muted by console")
+        val parsed = PunishmentArguments.parse(args, defaultReason = "Muted by ${sender.name}")
         if (parsed == null) {
             sender.sendMessage("Usage: $usage")
             return

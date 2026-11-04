@@ -2,6 +2,9 @@
 // Copyright (C) 2026 OnixNine
 package me.onixdev.ircchat.command.api
 
+import me.onixdev.ircchat.command.api.CommandSender
+import me.onixdev.ircchat.service.permission.Permission
+import me.onixdev.ircchat.service.permission.Role
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -10,7 +13,9 @@ import org.junit.jupiter.api.Test
 
 class CommandManagerTest {
 
-    private class RecordingSender : CommandSender {
+    private class RecordingSender(
+        override val role: Role = Role.USER
+    ) : CommandSender {
         override val name: String = "test"
         val messages = mutableListOf<String>()
         override fun sendMessage(message: String) {
@@ -46,6 +51,22 @@ class CommandManagerTest {
                 )
             )
         )
+    }
+
+    @Test
+    fun `default commands declare their permissions`() {
+        val byPermission = CommandManager().commands.associate { it.name.lowercase() to it.permission }
+
+        assertEquals(Permission.ROLE, byPermission["role"])
+        assertEquals(Permission.KICK, byPermission["kick"])
+        assertEquals(Permission.BAN, byPermission["ban"])
+        assertEquals(Permission.UNBAN, byPermission["unban"])
+        assertEquals(Permission.MUTE, byPermission["mute"])
+        assertEquals(Permission.UNMUTE, byPermission["unmute"])
+        assertEquals(Permission.HISTORY, byPermission["history"])
+        assertEquals(Permission.PLIST, byPermission["plist"])
+        assertEquals(Permission.BROADCAST, byPermission["broadcast"])
+        assertEquals(Permission.STOP, byPermission["stop"])
     }
 
     @Test
@@ -137,5 +158,58 @@ class CommandManagerTest {
 
         assertFalse(manager.dispatch(sender, "broadcast hi"))
         assertTrue(sender.messages.any { it.contains("Unknown command") })
+    }
+
+    @Test
+    fun `dispatch denies a command without the required permission`() {
+        val command = object : Command("ban", "b", "/ban", permission = Permission.BAN) {
+            var ran = false
+            override fun execute(sender: CommandSender, args: List<String>) {
+                ran = true
+            }
+        }
+        val manager = isolated(command)
+        val sender = RecordingSender(Role.USER)
+
+        assertFalse(manager.dispatch(sender, "ban bob"))
+        assertFalse(command.ran)
+        assertTrue(sender.messages.any { it.contains("permission") })
+    }
+
+    @Test
+    fun `dispatch allows a command with the required permission`() {
+        val command = object : Command("ban", "b", "/ban", permission = Permission.BAN) {
+            var ran = false
+            override fun execute(sender: CommandSender, args: List<String>) {
+                ran = true
+            }
+        }
+        val manager = isolated(command)
+
+        assertTrue(manager.dispatch(RecordingSender(Role.ADMIN), "ban bob"))
+        assertTrue(command.ran)
+    }
+
+    @Test
+    fun `moderator may kick but not ban`() {
+        val kick = FakeCommandWithPermission("kick", Permission.KICK)
+        val ban = FakeCommandWithPermission("ban", Permission.BAN)
+        val manager = isolated(kick, ban)
+        val sender = RecordingSender(Role.MODERATOR)
+
+        assertTrue(manager.dispatch(sender, "kick bob"))
+        assertFalse(manager.dispatch(sender, "ban bob"))
+        assertTrue(kick.calls > 0)
+        assertEquals(0, ban.calls)
+    }
+
+    private class FakeCommandWithPermission(
+        name: String,
+        permission: Permission
+    ) : Command(name, "fake", "/$name", permission = permission) {
+        var calls = 0
+        override fun execute(sender: CommandSender, args: List<String>) {
+            calls++
+        }
     }
 }
