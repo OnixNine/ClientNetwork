@@ -183,4 +183,4 @@ java -jar build/libs/IrcChat-1.0-SNAPSHOT.jar
 
 ## Лицензия
 
-MIT (см. `fabric.mod.json`).
+GNU General Public License v3.0 or later — см. [`LICENSE`](LICENSE).
